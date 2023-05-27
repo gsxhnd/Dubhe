@@ -1,0 +1,16 @@
+syntax = "proto3";
+package raft_service;
+
+// import "eraft.proto";
+
+service RaftService {
+  // rpc RequestId(eraftpb.Entry) returns (IdRequestReponse) {}
+  rpc RequestId(IdRequestRequest) returns (IdRequestReponse) {}
+}
+
+// message Empty {}
+message IdRequestRequest {
+  uint64 id  = 1;
+}
+
+message IdRequestReponse { bytes data = 1; }

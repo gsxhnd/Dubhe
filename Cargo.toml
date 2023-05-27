@@ -1,0 +1,32 @@
+[workspace]
+members = ["tower-mqtt","tower-raft","tower"]
+
+
+[workspace.package]
+name = "ThingsTower"
+version = "0.1.0"
+edition = "2021"
+authors = [""]
+description = "MQTT Server for v3.1, v3.1.1 and v5.0 protocols"
+repository = "https://github.com/gsxhnd/Tower"
+license = "MIT license"
+categories = ["network"]
+keywords = ["MQTT", "IoT", "messaging", "MQTT Server", "MQTT Broker"]
+exclude = [".gitignore", ".cargo/config"]
+rust-version = "1.68"
+
+
+[path]
+tower_mqtt = {path ="tower-mqtt"}
+tower_raft = {path ="tower-raft"}
+
+[workspace.dependencies]
+bytes = { version = "1.4", features = ["serde"] }
+futures = { version = "0.3" }
+futures-util = { version = "0.3" }
+serde = { version = "1.0.162", features = ["derive"] }
+tokio = { version = "1.28", features = ["full"] }
+tokio-util = {version = "0.7", features = ["codec"]}
+tokio-tungstenite = { version= "0.19" }
+tracing = {version = "0.1"}
+tracing-subscriber = "0.3"

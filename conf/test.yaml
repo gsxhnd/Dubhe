@@ -1,0 +1,35 @@
+log:
+  level: "debug"
+  dir: "debug"
+  file: "debug"
+
+mqtt:
+  listener:
+    tcp:
+      addr: "127.0.0.1:1883"
+    tls:
+      addr: "0.0.0.0:8883"
+      cert: ""
+      key: ""
+    ws:
+      addr: ""
+    wss:
+      addr: ""
+      cert: ""
+      key: ""
+  workers: 0
+  max_connections: 100
+  max_clientid_len: 65535
+  max_qos_allowed: 2
+  shared_subscription: true
+
+api:
+  enable: true
+
+peer:
+  server_addr: "127.0.0.1:1881"
+  worker: 0
+  nodes:
+    - "node1@127.0.0.1:8080"
+    - "node2@127.0.0.1:8080"
+    - "node3@127.0.0.1:8080"

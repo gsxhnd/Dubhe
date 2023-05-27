@@ -1,0 +1,15 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
