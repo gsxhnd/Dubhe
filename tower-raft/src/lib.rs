@@ -5,3 +5,6 @@ pub mod raft_node;
 pub mod raft_server;
 pub(crate) mod raft_service;
 // pub mod storage;
+
+mod config;
+pub use self::config::RaftConfig;

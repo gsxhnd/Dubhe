@@ -1,12 +1,14 @@
-use crate::raft_service::raft_service_server::{RaftService, RaftServiceServer};
-use crate::raft_service::{IdRequestReponse, IdRequestRequest};
 use std::net::SocketAddr;
 use tonic::{transport::Server, Request, Response, Status};
 use tracing::info;
 
+use crate::config::RaftConfig;
+use crate::raft_service::raft_service_server::{RaftService, RaftServiceServer};
+use crate::raft_service::{IdRequestReponse, IdRequestRequest};
+
 pub struct RaftServer {
     // snd: mpsc::Sender<Message>,
-    addr: SocketAddr,
+    cfg: RaftConfig,
 }
 
 #[derive(Debug, Default)]
@@ -24,15 +26,21 @@ impl RaftService for RaftServiceGrpcServer {
 }
 
 impl RaftServer {
-    pub fn new(a: SocketAddr) -> Self {
-        RaftServer { addr: a }
+    pub fn new(cfg: RaftConfig) -> Self {
+        RaftServer { cfg }
     }
     pub async fn run(self) {
         let svc = RaftServiceGrpcServer::default();
-        info!("raft service started in {}", self.addr.to_string());
+        let addr: SocketAddr = self
+            .cfg
+            .listener_addr
+            .parse()
+            .expect("address is not valid");
+
+        info!("raft service started in {}", self.cfg.listener_addr);
         Server::builder()
             .add_service(RaftServiceServer::new(svc))
-            .serve(self.addr)
+            .serve(addr)
             .await
             .expect("");
     }

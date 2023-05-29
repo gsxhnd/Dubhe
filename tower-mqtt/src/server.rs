@@ -119,7 +119,7 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
         let ws_listener = TcpListener::bind(addr).await.expect("msg");
         info!(
             "mqtt ws service started in: {}",
-            self.config.listener.tcp.addr
+            self.config.listener.ws.addr
         );
 
         while let Ok((stream, _)) = ws_listener.accept().await {

@@ -1,8 +1,7 @@
 use axum::{routing::get, Router};
 use clap::Parser;
 use futures::future;
-use std::net::SocketAddr;
-use std::{fs, thread};
+use std::fs;
 use tracing::info;
 use tracing_subscriber;
 
@@ -26,12 +25,7 @@ fn main() {
 
     let path = cli.config.unwrap();
 
-    info!(
-        "config path: {:?}, {:?},{:?}",
-        path,
-        thread::current().id(),
-        thread::current().name()
-    );
+    info!("config path: {:?}", path);
 
     let content = fs::read_to_string(path).expect("read config path");
     let config_data: config::Config =
@@ -43,13 +37,8 @@ fn main() {
         .build()
         .expect("");
 
-    let raft_config = config_data.peer.clone();
     let raft_handle = runtime.spawn(async move {
-        let addr: SocketAddr = raft_config
-            .server_addr
-            .parse()
-            .expect("address is not valid");
-        let raft = raft_server::RaftServer::new(addr);
+        let raft = raft_server::RaftServer::new(config_data.peer.clone());
         raft.run().await;
     });
 

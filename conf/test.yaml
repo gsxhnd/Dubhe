@@ -31,7 +31,7 @@ api:
   enable: true
 
 peer:
-  server_addr: "127.0.0.1:1881"
+  listener_addr: "127.0.0.1:1881"
   worker: 0
   nodes:
     - "node1@127.0.0.1:8080"
