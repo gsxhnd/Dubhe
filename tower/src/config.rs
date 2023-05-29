@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tower_mqtt::MqttConfig;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -12,46 +13,6 @@ pub struct LogConfig {
     level: String,
     dir: String,
     file: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MqttConfig {
-    pub listener: MqttListener,
-    pub workers: u8,
-    pub max_connections: u32,
-    pub max_clientid_len: u32,
-    pub max_qos_allowed: u32,
-    pub shared_subscription: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MqttListener {
-    pub tcp: MqttListenerTCP,
-    pub tls: MqttListenerTLS,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MqttListenerTCP {
-    addr: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MqttListenerTLS {
-    addr: String,
-    cert: String,
-    key: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MqttListenerWS {
-    addr: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MqttListenerWSS {
-    addr: String,
-    cert: String,
-    key: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

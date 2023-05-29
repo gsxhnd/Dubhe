@@ -1736,6 +1736,7 @@ dependencies = [
  "futures",
  "futures-util",
  "serde",
+ "serde_yaml",
  "tokio 1.28.0",
  "tokio-tungstenite",
  "tokio-util 0.7.8",

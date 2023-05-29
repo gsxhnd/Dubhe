@@ -53,8 +53,8 @@ fn main() {
         raft.run().await;
     });
 
-    let mq_handle = runtime.spawn(async {
-        let s = MqttServer::new();
+    let mq_handle = runtime.spawn(async move {
+        let s = MqttServer::new(config_data.mqtt.clone());
         s.run().await;
     });
 

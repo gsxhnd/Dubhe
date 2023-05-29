@@ -21,7 +21,7 @@ clap = { version = "4.2.7", features = ["derive","env"] }
 futures = { workspace = true }
 mqtt-codec = "0.3.0"
 serde = { workspace = true, features = ["derive"] }
-serde_yaml = "0.9"
+serde_yaml = { workspace = true}
 tokio = { workspace = true, features = ["full"] }
 tokio-util = {workspace = true, features = ["codec"]}
 tracing = { workspace = true }

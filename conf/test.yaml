@@ -6,15 +6,19 @@ log:
 mqtt:
   listener:
     tcp:
+      enable: true
       addr: "127.0.0.1:1883"
     tls:
-      addr: "0.0.0.0:8883"
+      enable: true
+      addr: "0.0.0.0:1884"
       cert: ""
       key: ""
     ws:
-      addr: ""
+      enable: true
+      addr: "127.0.0.1:1885"
     wss:
-      addr: ""
+      enable: true
+      addr: "127.0.0.1:1886"
       cert: ""
       key: ""
   workers: 0
