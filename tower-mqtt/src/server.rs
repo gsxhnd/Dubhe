@@ -1,7 +1,6 @@
 use futures_util::{SinkExt, StreamExt};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use std::{net::Ipv4Addr, thread};
 use tokio::net::TcpListener;
 use tokio_tungstenite;
 use tokio_util::codec::Framed;
@@ -162,13 +161,7 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
 
                 while let Some(message) = read.next().await {
                     let message = message.unwrap();
-                    info!(
-                        "Received a message from {}: {} thread {:?} {:?}",
-                        client_addr,
-                        message,
-                        thread::current().id(),
-                        thread::current().name()
-                    );
+                    info!("Received a message from {}: {}", client_addr, message,);
                     // write.send(message).await.unwrap();
                 }
             });
