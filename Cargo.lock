@@ -1751,6 +1751,7 @@ dependencies = [
  "prost",
  "raft",
  "serde",
+ "serde_yaml",
  "tokio 1.28.0",
  "tonic",
  "tonic-build",

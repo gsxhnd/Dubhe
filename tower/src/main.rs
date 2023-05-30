@@ -10,6 +10,7 @@ use tower_raft::raft_server;
 
 mod config;
 mod flag;
+mod app;
 use crate::flag::CliFlag;
 
 fn main() {

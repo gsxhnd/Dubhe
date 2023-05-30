@@ -25,6 +25,7 @@ async-trait = "0.1.68"
 prost = "0.11"
 raft = { git = "https://github.com/tikv/raft-rs.git", branch = "master" }
 serde = { workspace = true, features = ["derive"] }
+serde_yaml = { workspace = true}
 tokio = { workspace = true, features = ["full"] }
 tracing = {workspace = true}
 tonic = "0.9"
