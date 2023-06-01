@@ -10,6 +10,7 @@ use crate::flag::CliFlag;
 
 fn main() {
     let cli = CliFlag::parse();
+
     // let t_builder = tracing_subscriber::fmt()
     //     .pretty()
     //     .with_line_number(false)
@@ -27,5 +28,5 @@ fn main() {
     let config_data: config::Config =
         serde_yaml::from_str(content.as_str()).expect("serialize config failed");
 
-    app::App::build(config_data.clone()).run();
+    app::AppBuilder::new(config_data).build().run();
 }

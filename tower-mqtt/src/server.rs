@@ -5,6 +5,7 @@ use tokio::net::TcpListener;
 use tokio_tungstenite;
 use tokio_util::codec::Framed;
 use tracing::info;
+use tracing_subscriber;
 
 use crate::config::MqttConfig;
 use crate::v5::codec::{self, Packet};

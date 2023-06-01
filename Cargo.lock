@@ -1693,6 +1693,7 @@ dependencies = [
  "tower_mqtt",
  "tower_raft",
  "tracing",
+ "tracing-log",
  "tracing-subscriber",
 ]
 
@@ -1741,6 +1742,8 @@ dependencies = [
  "tokio-tungstenite",
  "tokio-util 0.7.8",
  "tracing",
+ "tracing-log",
+ "tracing-subscriber",
 ]
 
 [[package]]

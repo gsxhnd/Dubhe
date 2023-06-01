@@ -4,37 +4,45 @@ use tokio::runtime::Runtime;
 use tracing::info;
 
 use tower_mqtt::MqttServer;
-use tower_raft::raft_server;
+use tower_raft::RaftServer;
 
 use crate::config::Config;
 
+#[derive(Debug)]
 pub struct App {
     runtime: Runtime,
-    config: Config,
+    raft_config: tower_raft::RaftConfig,
+    mqtt_config: tower_mqtt::MqttConfig,
 }
 
-impl App {
-    pub fn build(cfg: Config) -> Self {
+pub struct AppBuilder {
+    config: Config,
+}
+impl AppBuilder {
+    pub fn new(cfg: Config) -> Self {
+        AppBuilder { config: cfg }
+    }
+    pub fn build(self) -> App {
         App {
             runtime: tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 // .worker_threads(2)
                 .build()
                 .expect(""),
-            config: cfg,
+            raft_config: self.config.peer.clone(),
+            mqtt_config: self.config.mqtt.clone(),
         }
     }
-    pub fn run(&self) {
-        let peer_config = self.config.peer.clone();
-        let mqtt_config = self.config.mqtt.clone();
+}
+
+impl App {
+    pub fn run(self) {
         let raft_handle = self.runtime.spawn(async {
-            let raft = raft_server::RaftServer::new(peer_config);
-            raft.run().await;
+            RaftServer::new(self.raft_config).run().await;
         });
 
         let mq_handle = self.runtime.spawn(async {
-            let s = MqttServer::new(mqtt_config);
-            s.run().await;
+            MqttServer::new(self.mqtt_config).run().await;
         });
 
         let api_handle = self.runtime.spawn(async {
@@ -45,9 +53,9 @@ impl App {
                 .await
                 .unwrap();
         });
-        let servers = vec![raft_handle, mq_handle, api_handle];
-        self.runtime.block_on(async move {
-            future::join_all(servers).await;
+        let services = vec![raft_handle, mq_handle, api_handle];
+        self.runtime.block_on(async {
+            future::join_all(services).await;
         });
     }
 }
