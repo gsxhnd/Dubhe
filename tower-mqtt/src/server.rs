@@ -72,13 +72,14 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
         loop {
             let (stream, addr) = tcp_listener.accept().await.unwrap();
             info!("New connection: {}", addr);
-            let (_packet_sink, mut packet_stream) =
+            let (packet_sink, mut packet_stream) =
                 Framed::new(stream, codec::MqttCodec::new()).split();
 
             let first_packet = packet_stream.next().await;
             match first_packet {
                 Some(Ok(Packet::Connect(connect_packet))) => {
                     println!("get connect packet {:?}", connect_packet);
+                    // packet_sink.send().await?;
                 }
                 Some(Ok(Packet::ConnAck(_, _))) => todo!(),
                 Some(Err(_)) => return,

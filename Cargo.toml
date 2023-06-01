@@ -30,5 +30,4 @@ tokio = { version = "1.28", features = ["full"] }
 tokio-util = {version = "0.7", features = ["codec"]}
 tokio-tungstenite = { version= "0.19" }
 tracing = {version = "0.1"}
-tracing-log = {version = "0.1"}
 tracing-subscriber = "0.3"

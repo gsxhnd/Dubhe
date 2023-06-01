@@ -9,4 +9,4 @@ mod version;
 
 pub use self::config::MqttConfig;
 pub use self::server::MqttServer;
-pub use self::types::QoS;
+// pub use self::types::QoS;

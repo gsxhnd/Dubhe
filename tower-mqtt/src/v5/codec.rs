@@ -198,17 +198,15 @@ impl MqttCodec {
     pub fn new() -> Self {
         MqttCodec {}
     }
-    pub fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Packet>, DecodeError> {
-        // TODO - Ideally we should keep a state machine to store the data we've read so far.
-        let _packet = decoder::decode_mqtt(buf);
+    // pub fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Packet>, DecodeError> {
+    //     // TODO - Ideally we should keep a state machine to store the data we've read so far.
+    //     let packet = decoder::decode_mqtt(buf);
 
-        // if let Ok(Some(Packet::Connect(packet))) = &packet {
-        //     self.version = packet.protocol_version;
-        // }
-
-        // packet
-        todo!()
-    }
+    //     if let Ok(Some(Packet::Connect(packet))) = &packet {
+    //         // self.version = packet.protocol_version;
+    //     }
+    //     packet
+    // }
 
     pub fn encode(&mut self, _packet: Packet, _bytes: &mut BytesMut) -> Result<(), EncodeError> {
         // encoder::encode_mqtt(&packet, bytes, self.version);
@@ -222,7 +220,14 @@ impl Decoder for MqttCodec {
 
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         // TODO - Ideally we should keep a state machine to store the data we've read so far.
-        self.decode(buf)
+        println!("decoder impl");
+        let packet = decoder::decode_mqtt(buf);
+
+        if let Ok(Some(Packet::Connect(packet))) = &packet {
+            // self.version = packet.protocol_version;
+        }
+        packet
+        // self.decode(buf)
     }
 }
 
