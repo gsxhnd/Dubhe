@@ -5,7 +5,6 @@ use tokio::net::TcpListener;
 use tokio_tungstenite;
 use tokio_util::codec::Framed;
 use tracing::info;
-use tracing_subscriber;
 
 use crate::config::MqttConfig;
 use crate::v5::codec::{self, Packet};
@@ -25,6 +24,7 @@ pub enum BrokerMessage {
     // Unsubscribe(String, UnsubscribePacket), // TODO - replace string client_id with int
     // Disconnect(String, WillDisconnectLogic),
 }
+
 #[derive(Debug, Clone)]
 pub struct MqttServer<V3, V5> {
     v3: V3,
