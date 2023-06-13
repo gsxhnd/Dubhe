@@ -29,6 +29,7 @@ mqtt:
 
 api:
   enable: true
+  listener_addr: "127.0.0.1:3000"
 
 peer:
   listener_addr: "127.0.0.1:1881"

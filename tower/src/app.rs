@@ -1,11 +1,10 @@
-use axum::{routing::get, Router};
 use futures::future;
 use tokio::runtime::Runtime;
-use tracing::info;
 
 use tower_mqtt::MqttServer;
 use tower_raft::RaftServer;
 
+use crate::api::{ApiConfig, ApiServer};
 use crate::config::Config;
 
 #[derive(Debug)]
@@ -13,6 +12,7 @@ pub struct App {
     runtime: Runtime,
     raft_config: tower_raft::RaftConfig,
     mqtt_config: tower_mqtt::MqttConfig,
+    api_config: ApiConfig,
 }
 
 pub struct AppBuilder {
@@ -31,6 +31,7 @@ impl AppBuilder {
                 .expect(""),
             raft_config: self.config.peer.clone(),
             mqtt_config: self.config.mqtt.clone(),
+            api_config: self.config.api.clone(),
         }
     }
 }
@@ -46,12 +47,7 @@ impl App {
         });
 
         let api_handle = self.runtime.spawn(async {
-            let app = Router::new().route("/", get(|| async { "Hello, World!" }));
-            info!("api service started in: {}", "0.0.0.0:3000");
-            axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-                .serve(app.into_make_service())
-                .await
-                .unwrap();
+            ApiServer::new(self.api_config).run().await;
         });
         let services = vec![raft_handle, mq_handle, api_handle];
         self.runtime.block_on(async {

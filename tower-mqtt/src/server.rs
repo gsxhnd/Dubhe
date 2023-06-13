@@ -171,6 +171,7 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
     }
 }
 
+
 #[derive(Debug, Clone)]
 pub struct DefaultProtocolServer {
     ver: ProtocolVersion,
