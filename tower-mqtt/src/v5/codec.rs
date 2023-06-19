@@ -21,7 +21,7 @@ pub enum Packet {
     // Disconnect(Disconnect, Option<DisconnectProperties>),
 }
 
-/// Acknowledgement to QoS1 publish
+// Acknowledgement to QoS1 publish
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PubAck {
     pub pkid: u16,
@@ -218,15 +218,15 @@ impl Decoder for MqttCodec {
     type Error = DecodeError;
     type Item = Packet;
 
-    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Item>, Self::Error> {
         // TODO - Ideally we should keep a state machine to store the data we've read so far.
-        println!("decoder impl");
         let packet = decoder::decode_mqtt(buf);
 
-        if let Ok(Some(Packet::Connect(packet))) = &packet {
-            // self.version = packet.protocol_version;
-        }
-        packet
+        // if let Ok(Some(Packet::Connect(packet))) = &packet {
+        //     self.version = packet.protocol_version;
+        // }
+        // packet
+        todo!()
         // self.decode(buf)
     }
 }

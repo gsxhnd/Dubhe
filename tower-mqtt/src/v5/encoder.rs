@@ -1,3 +1,9 @@
+use crate::v5::codec::Packet;
+use crate::version::ProtocolVersion;
+use bytes::{Buf, BytesMut};
+
+use super::codec::ConnAck;
+
 pub fn encode_mqtt(packet: &Packet, bytes: &mut BytesMut, protocol_version: ProtocolVersion) {
     let remaining_length = packet.calculate_size(protocol_version);
     let packet_size =
@@ -13,7 +19,8 @@ pub fn encode_mqtt(packet: &Packet, bytes: &mut BytesMut, protocol_version: Prot
 
     match packet {
         Packet::Connect(p) => encode_connect(p, bytes, protocol_version),
-        Packet::ConnectAck(p) => encode_connect_ack(p, bytes, protocol_version),
+        // Packet::ConnAck(p) => encode_connect_ack(p, bytes, protocol_version),
+        Packet::ConnAck(p, proper) => encode_connect_ack(p, bytes),
         Packet::Publish(p) => encode_publish(p, bytes, protocol_version),
         Packet::PublishAck(p) => encode_publish_ack(p, bytes, protocol_version),
         Packet::PublishReceived(p) => encode_publish_received(p, bytes, protocol_version),
@@ -23,9 +30,15 @@ pub fn encode_mqtt(packet: &Packet, bytes: &mut BytesMut, protocol_version: Prot
         Packet::SubscribeAck(p) => encode_subscribe_ack(p, bytes, protocol_version),
         Packet::Unsubscribe(p) => encode_unsubscribe(p, bytes, protocol_version),
         Packet::UnsubscribeAck(p) => encode_unsubscribe_ack(p, bytes, protocol_version),
-        Packet::PingRequest => {},
-        Packet::PingResponse => {},
+        Packet::PingRequest => {}
+        Packet::PingResponse => {}
         Packet::Disconnect(p) => encode_disconnect(p, bytes, protocol_version),
         Packet::Authenticate(p) => encode_authenticate(p, bytes, protocol_version),
     }
+}
+
+fn encode_slice() {}
+
+fn encode_connect_ack(packet: &ConnAck, b: &mut BytesMut) {
+    packet.to_buff
 }

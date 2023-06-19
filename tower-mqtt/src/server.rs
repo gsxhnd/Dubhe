@@ -80,6 +80,7 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
                 Some(Ok(Packet::Connect(connect_packet))) => {
                     println!("get connect packet {:?}", connect_packet);
                     // packet_sink.send().await?;
+                    packet_sink.send(Packet::ConnAck((), ()))
                 }
                 Some(Ok(Packet::ConnAck(_, _))) => todo!(),
                 Some(Err(_)) => return,
@@ -170,7 +171,6 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
         }
     }
 }
-
 
 #[derive(Debug, Clone)]
 pub struct DefaultProtocolServer {

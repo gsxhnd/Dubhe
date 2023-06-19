@@ -22,6 +22,7 @@ required-features = [] # 构建对象所需的 Cargo Features (N/A for lib).
 bytes = { workspace = true, features = ["serde"] }
 futures = { workspace = true }
 futures-util = { workspace = true }
+mqttrs = { workspace= true, features = [ "derive" ] }
 serde = { workspace = true, features = ["derive"] }
 serde_yaml = { workspace = true}
 tokio = { workspace = true, features = ["full"] }
