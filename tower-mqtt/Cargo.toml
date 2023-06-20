@@ -30,3 +30,4 @@ tokio-util = {workspace = true, features = ["codec"]}
 tokio-tungstenite = { workspace= true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+tokio-stream = "0.1.14"

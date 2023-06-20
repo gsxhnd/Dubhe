@@ -1,4 +1,4 @@
-use futures_util::{SinkExt, StreamExt};
+use futures_util::StreamExt;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
@@ -7,23 +7,9 @@ use tokio_util::codec::Framed;
 use tracing::info;
 
 use crate::config::MqttConfig;
-use crate::v5::codec::{self, Packet};
-use crate::version::ProtocolVersion;
-
-#[derive(Debug, Clone)]
-pub enum BrokerMessage {
-    _Test(String),
-    // NewClient(Box<ConnectPacket>, Sender<ClientMessage>),
-    // Publish(String, Box<PublishPacket>),
-    // PublishAck(String, PublishAckPacket), // TODO - This can be handled by the client task
-    // PublishRelease(String, PublishReleasePacket), // TODO - This can be handled by the client task
-    // PublishReceived(String, PublishReceivedPacket),
-    // PublishComplete(String, PublishCompletePacket),
-    // PublishFinalWill(String, FinalWill),
-    // Subscribe(String, SubscribePacket), // TODO - replace string client_id with int
-    // Unsubscribe(String, UnsubscribePacket), // TODO - replace string client_id with int
-    // Disconnect(String, WillDisconnectLogic),
-}
+use crate::v3::codec as MqttCodecV3;
+use crate::v5::codec as MqttCodecV5;
+use crate::version::{ProtocolVersion, VersionCodec};
 
 #[derive(Debug, Clone)]
 pub struct MqttServer<V3, V5> {
@@ -47,6 +33,7 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
             // sender,
         }
     }
+
     pub async fn run(self) {
         info!("mqtt server running");
         tokio::spawn(self.clone().listen_tcp());
@@ -71,23 +58,33 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
         );
         loop {
             let (stream, addr) = tcp_listener.accept().await.unwrap();
-            info!("New connection: {}", addr);
-            let (packet_sink, mut packet_stream) =
-                Framed::new(stream, codec::MqttCodec::new()).split();
-
-            let first_packet = packet_stream.next().await;
-            match first_packet {
-                Some(Ok(Packet::Connect(connect_packet))) => {
-                    println!("get connect packet {:?}", connect_packet);
-                    // packet_sink.send().await?;
-                    packet_sink.send(Packet::ConnAck((), ()))
+            let mut framed = Framed::new(stream, VersionCodec);
+            let mqtt_version = match framed.next().await {
+                Some(Ok(version)) => version,
+                Some(Err(_)) => {
+                    todo!()
                 }
-                Some(Ok(Packet::ConnAck(_, _))) => todo!(),
-                Some(Err(_)) => return,
-                None => return,
-            }
+                None => {
+                    todo!()
+                }
+            };
+            match mqtt_version {
+                ProtocolVersion::MQTT3 => {
+                    // MqttCodecV3::Codec::new()
+                    // let mut v3_codec = MqttCodecV3::Codec::new();
+                    let framed = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
+                    let (packet_sink, mut packet_stream) = framed.split();
+                }
+                ProtocolVersion::MQTT5 => {
+                    // MqttCodecV5::Codec::new()
+                    // let mut v5_codec = MqttCodecV5::Codec::new();
+                    let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
+                    let (packet_sink, mut packet_stream) = framed.split();
+                }
+            };
         }
     }
+
     pub async fn listen_tls(self) {
         let addr: SocketAddr = self
             .config
@@ -109,6 +106,7 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
             *a += 1;
         }
     }
+
     pub async fn listen_ws(self) {
         let addr: SocketAddr = self
             .config
@@ -140,6 +138,7 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
             });
         }
     }
+
     pub async fn listen_wss(self) {
         let addr: SocketAddr = self
             .config

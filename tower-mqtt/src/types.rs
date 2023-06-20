@@ -1,10 +1,12 @@
-// pub const MQTT: &[u8] = b"MQTT";
-// pub const MQTT_LEVEL_3: u8 = 4;
-// pub const MQTT_LEVEL_5: u8 = 5;
-// pub const WILL_QOS_SHIFT: u8 = 3;
+pub const MQTT: &[u8] = b"MQTT";
+pub const MQISDP: &[u8] = b"MQIsdp";
+pub const MQTT_LEVEL_31: u8 = 3;
+pub const MQTT_LEVEL_311: u8 = 4;
+pub const MQTT_LEVEL_5: u8 = 5;
+pub const WILL_QOS_SHIFT: u8 = 3;
 
-/// Max possible packet size
-// pub const MAX_PACKET_SIZE: u32 = 0xF_FF_FF_FF;
+// Max possible packet size
+pub const MAX_PACKET_SIZE: u32 = 0xF_FF_FF_FF;
 
 /// Quality of Service
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -41,25 +43,6 @@ pub enum QoS {
 // pub struct ConnectAckFlags: u8 {
 // }
 // const SESSION_PRESENT: u8 = 0b0000_0001;
-
-// pub(super) mod packet_type {
-//     pub(crate) const CONNECT: u8 = 0b0001_0000;
-//     pub(crate) const CONNACK: u8 = 0b0010_0000;
-//     pub(crate) const PUBLISH_START: u8 = 0b0011_0000;
-//     pub(crate) const PUBLISH_END: u8 = 0b0011_1111;
-//     pub(crate) const PUBACK: u8 = 0b0100_0000;
-//     pub(crate) const PUBREC: u8 = 0b0101_0000;
-//     pub(crate) const PUBREL: u8 = 0b0110_0010;
-//     pub(crate) const PUBCOMP: u8 = 0b0111_0000;
-//     pub(crate) const SUBSCRIBE: u8 = 0b1000_0010;
-//     pub(crate) const SUBACK: u8 = 0b1001_0000;
-//     pub(crate) const UNSUBSCRIBE: u8 = 0b1010_0010;
-//     pub(crate) const UNSUBACK: u8 = 0b1011_0000;
-//     pub(crate) const PINGREQ: u8 = 0b1100_0000;
-//     pub(crate) const PINGRESP: u8 = 0b1101_0000;
-//     pub(crate) const DISCONNECT: u8 = 0b1110_0000;
-//     pub(crate) const AUTH: u8 = 0b1111_0000;
-// }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub(crate) struct FixedHeader {

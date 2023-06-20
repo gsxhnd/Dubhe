@@ -213,6 +213,7 @@ impl Decoder for Codec {
 impl Encoder<Packet> for Codec {
     type Error = EncodeError;
     fn encode(&mut self, packet: Packet, bytes: &mut BytesMut) -> Result<(), Self::Error> {
-        self.encode(packet, bytes)
+        // self.encode(packet, bytes)
+        todo!()
     }
 }

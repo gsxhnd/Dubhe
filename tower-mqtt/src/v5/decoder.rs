@@ -1,25 +1,11 @@
 use bytes::{Buf, BytesMut};
-use mqttrs::{decode_slice, encode_slice, Connack, Connect, Packet, Protocol};
 use std::io::Cursor;
 
-use crate::types::{packet_type_check, DecodeError, PacketType};
-// use crate::v5::codec::Packet;
+use crate::types::{DecodeError, PacketType};
+use crate::v5::codec::Packet;
 
 pub fn decode_mqtt(bytes: &mut BytesMut) -> Result<Option<Packet>, DecodeError> {
-    match decode_slice(bytes) {
-        Ok(Some(Packet::Publish(p))) => {
-            todo!()
-        }
-        Ok(Some(Packet::Connect(con))) => {
-            println!("connect packet");
-            println!("client id: {:?}", con.clone().client_id);
-            println!("protocol {:?}", con.clone().protocol);
-
-            todo!()
-        }
-        Ok(None) => panic!("not enough data"),
-        other => panic!("unexpected {:?}", other),
-    }
+    todo!()
     // let mut bytes = Cursor::new(bytes);
     // let first_byte = bytes.get_u8();
 
