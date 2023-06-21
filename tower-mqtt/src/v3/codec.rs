@@ -1,12 +1,13 @@
 use crate::types::{DecodeError, EncodeError};
-use crate::v5::decoder;
 use bytes::{Bytes, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
+
+use crate::v5::decoder;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Packet {
     Connect(ConnectPacket),
-    ConnAck(ConnAck, Option<ConnAckProperties>),
+    ConnAck(ConnAck),
     // Publish(Publish, Option<PublishProperties>),
     // PubAck(PubAck, Option<PubAckProperties>),
     // PingReq(PingReq),
@@ -113,35 +114,75 @@ pub struct ConnectProperties {
 pub enum ConnectAckCode {
     Success,
     RefusedProtocolVersion,
-    BadClientId,
-    ServiceUnavailable,
-    UnspecifiedError,
-    MalformedPacket,
-    ProtocolError,
-    ImplementationSpecificError,
-    UnsupportedProtocolVersion,
+    // BadClientId,
+    // ServiceUnavailable,
+    // UnspecifiedError,
+    // MalformedPacket,
+    // ProtocolError,
+    // ImplementationSpecificError,
+    // UnsupportedProtocolVersion,
     ClientIdentifierNotValid,
     BadUserNamePassword,
     NotAuthorized,
     ServerUnavailable,
-    ServerBusy,
-    Banned,
-    BadAuthenticationMethod,
-    TopicNameInvalid,
-    PacketTooLarge,
-    QuotaExceeded,
-    PayloadFormatInvalid,
-    RetainNotSupported,
-    QoSNotSupported,
-    UseAnotherServer,
-    ServerMoved,
-    ConnectionRateExceeded,
+    // ServerBusy,
+    // Banned,
+    // BadAuthenticationMethod,
+    // TopicNameInvalid,
+    // PacketTooLarge,
+    // QuotaExceeded,
+    // PayloadFormatInvalid,
+    // RetainNotSupported,
+    // QoSNotSupported,
+    // UseAnotherServer,
+    // ServerMoved,
+    // ConnectionRateExceeded,
+}
+impl ConnectAckCode {
+    pub fn to_u8(&self) -> u8 {
+        match *self {
+            ConnectAckCode::Success => 0,
+            ConnectAckCode::RefusedProtocolVersion => 1,
+            ConnectAckCode::ClientIdentifierNotValid => 2,
+            ConnectAckCode::ServerUnavailable => 3,
+            ConnectAckCode::BadUserNamePassword => 4,
+            ConnectAckCode::NotAuthorized => 5,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConnAck {
     pub session_present: bool,
     pub code: ConnectAckCode,
+}
+impl ConnAck {
+    fn to_buffer(&self, buf: &mut [u8], offset: &mut usize) -> Result<(), EncodeError> {
+        println!("start conn ack to buffer: {}", buf[*offset..].len());
+        // check_remaining(buf, offset, 4)?;
+        // if buf[*offset..].len() < 4 {
+        //     return Err(EncodeError::BadTransport);
+        // }
+
+        let header: u8 = 0b00100000;
+        let length: u8 = 2;
+        let mut flags: u8 = 0b00000000;
+        if self.session_present {
+            flags |= 0b1;
+        };
+        let rc = self.code.to_u8();
+        write_u8(buf, offset, header)?;
+        write_u8(buf, offset, length)?;
+        write_u8(buf, offset, flags)?;
+        write_u8(buf, offset, rc)?;
+        println!("{:?}", buf);
+        Ok(())
+    }
+}
+fn write_u8(buf: &mut [u8], offset: &mut usize, val: u8) -> Result<(), EncodeError> {
+    buf[*offset] = val;
+    *offset += 1;
+    Ok(())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -214,6 +255,14 @@ impl Encoder<Packet> for Codec {
     type Error = EncodeError;
     fn encode(&mut self, packet: Packet, bytes: &mut BytesMut) -> Result<(), Self::Error> {
         // self.encode(packet, bytes)
-        todo!()
+        // todo!()
+        println!("{:?}", bytes);
+        // bytes.resize(2048, b'0');
+        match packet {
+            Packet::ConnAck(conn) => conn.to_buffer(bytes, &mut 0),
+            Packet::Connect(conn) => {
+                todo!()
+            }
+        }
     }
 }

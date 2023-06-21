@@ -1,9 +1,10 @@
-use futures_util::StreamExt;
+// use futures_util::sink::Send;
+use futures_util::{SinkExt, StreamExt};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 use tokio_tungstenite;
-use tokio_util::codec::Framed;
+use tokio_util::codec::{Framed, LinesCodec};
 use tracing::info;
 
 use crate::config::MqttConfig;
@@ -61,8 +62,9 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
             let mut framed = Framed::new(stream, VersionCodec);
             let mqtt_version = match framed.next().await {
                 Some(Ok(version)) => version,
-                Some(Err(_)) => {
-                    todo!()
+                Some(Err(e)) => {
+                    println!("{:?}", e);
+                    ProtocolVersion::MQTT5
                 }
                 None => {
                     todo!()
@@ -70,14 +72,26 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
             };
             match mqtt_version {
                 ProtocolVersion::MQTT3 => {
-                    // MqttCodecV3::Codec::new()
-                    // let mut v3_codec = MqttCodecV3::Codec::new();
-                    let framed = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
-                    let (packet_sink, mut packet_stream) = framed.split();
+                    println!("mqtt verssion: 3");
+                    let mut framed = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
+                    // let mut framed = framed.map_codec(|_codec| LinesCodec::new());
+
+                    let (mut packet_sink, mut packet_stream) = framed.split();
+                    let a = packet_sink
+                        .send(MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
+                            session_present: true,
+                            code: MqttCodecV3::ConnectAckCode::Success,
+                        }))
+                        .await;
+                    println!("encode error: {:?}", a.err());
+                    // let _ = packet_sink.flush().await;
+                    println!("send ack end")
                 }
                 ProtocolVersion::MQTT5 => {
                     // MqttCodecV5::Codec::new()
-                    // let mut v5_codec = MqttCodecV5::Codec::new();
+                    // todo!();
+                    println!("mqtt verssion: 5");
+                    let mut v5_codec = MqttCodecV5::Codec::new();
                     let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
                     let (packet_sink, mut packet_stream) = framed.split();
                 }
