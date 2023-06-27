@@ -2,6 +2,7 @@ pub mod v3;
 pub mod v5;
 
 mod config;
+mod decoder;
 mod server;
 mod topic;
 mod types;

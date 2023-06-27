@@ -9,7 +9,8 @@ pub const WILL_QOS_SHIFT: u8 = 3;
 pub const MAX_PACKET_SIZE: u32 = 0xF_FF_FF_FF;
 
 /// Quality of Service
-#[derive(serde::Serialize, serde::Deserialize)]
+// #[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone)]
 pub enum QoS {
     /// At most once delivery
     ///
@@ -29,6 +30,24 @@ pub enum QoS {
     /// for use when neither loss nor duplication of messages are acceptable.
     /// There is an increased overhead associated with this quality of service.
     ExactlyOnce = 2,
+}
+impl QoS {
+    pub fn to_u8(&self) -> u8 {
+        match *self {
+            QoS::AtMostOnce => 0,
+            QoS::AtLeastOnce => 1,
+            QoS::ExactlyOnce => 2,
+        }
+    }
+
+    pub fn from_u8(byte: u8) -> Result<QoS, DecodeError> {
+        match byte {
+            0 => Ok(QoS::AtMostOnce),
+            1 => Ok(QoS::AtLeastOnce),
+            2 => Ok(QoS::ExactlyOnce),
+            _n => Err(DecodeError::InvalidQoS),
+        }
+    }
 }
 
 // pub struct ConnectFlags: u8 {
