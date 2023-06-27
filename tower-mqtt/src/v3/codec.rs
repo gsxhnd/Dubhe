@@ -1,9 +1,8 @@
-use crate::types::{DecodeError, EncodeError};
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::{Bytes, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
 
-use crate::types::PacketType;
-use crate::v5::decoder;
+use crate::types::{DecodeError, EncodeError};
+use crate::v3::{decoder, encoder};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Packet {
@@ -157,6 +156,7 @@ pub struct ConnAck {
     pub session_present: bool,
     pub code: ConnectAckCode,
 }
+
 impl ConnAck {
     fn to_buffer(&self, buf: &mut [u8], offset: &mut usize) -> Result<(), EncodeError> {
         println!("start conn ack to buffer: {}", buf[*offset..].len());
@@ -247,57 +247,13 @@ impl Decoder for Codec {
     type Item = Packet;
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         // TODO - Ideally we should keep a state machine to store the data we've read so far.
-        // let packet = decoder::decode_mqtt(buf);
-        todo!()
+        decoder::decode_mqtt(buf)
     }
 }
 
 impl Encoder<Packet> for Codec {
     type Error = EncodeError;
     fn encode(&mut self, packet: Packet, bytes: &mut BytesMut) -> Result<(), Self::Error> {
-        // self.encode(packet, bytes)
-        // todo!()
-        println!("{:?}", bytes);
-        // bytes.resize(2048, b'0');
-        match packet {
-            Packet::ConnAck(conn) => {
-                // bytes.put_u8
-                let len = 2;
-                bytes.put_u8(0x20);
-                // let count = write_remaining_length(buffer, len)?;
-                let mut done = false;
-                let mut x = len;
-                let mut count = 0;
-
-                while !done {
-                    let mut byte = (x % 128) as u8;
-                    x /= 128;
-                    if x > 0 {
-                        byte |= 128;
-                    }
-
-                    bytes.put_u8(byte);
-                    count += 1;
-                    done = x == 0;
-                }
-
-                bytes.put_u8(conn.session_present as u8);
-                bytes.put_u8(connect_code(conn.code));
-                Ok(())
-            }
-            Packet::Connect(conn) => {
-                todo!()
-            }
-        }
-    }
-}
-
-fn connect_code(return_code: ConnectAckCode) -> u8 {
-    match return_code {
-        ConnectAckCode::Success => 0,
-        ConnectAckCode::RefusedProtocolVersion => 1,
-        ConnectAckCode::BadUserNamePassword => 4,
-        ConnectAckCode::NotAuthorized => 5,
-        _ => unreachable!(),
+        encoder::encode_mqtt(packet, bytes)
     }
 }
