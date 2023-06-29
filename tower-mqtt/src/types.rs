@@ -64,12 +64,12 @@ impl QoS {
 // const SESSION_PRESENT: u8 = 0b0000_0001;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub(crate) struct FixedHeader {
+pub struct FixedHeader {
     /// Fixed Header byte
-    pub(crate) first_byte: u8,
+    pub first_byte: u8,
     /// the number of bytes remaining within the current packet,
     /// including data in the variable header and the payload.
-    pub(crate) remaining_length: u32,
+    pub remaining_length: u32,
 }
 
 #[derive(Debug)]
@@ -159,25 +159,4 @@ pub enum PacketType {
     PINGRESP = 0b1101_0000,
     DISCONNECT = 0b1110_0000,
     AUTH = 0b1111_0000,
-}
-
-pub fn packet_type_check(b: u8) -> PacketType {
-    match b {
-        0b0001_0000 => PacketType::CONNECT,
-        0b0010_0000 => PacketType::CONNACK,
-        0b0011_0000 => PacketType::PUBLISH,
-        0b0100_0000 => PacketType::PUBACK,
-        0b0101_0000 => PacketType::PUBREC,
-        0b0110_0010 => PacketType::PUBREL,
-        0b0111_0000 => PacketType::PUBCOMP,
-        0b1000_0010 => PacketType::SUBSCRIBE,
-        0b1001_0000 => PacketType::SUBACK,
-        0b1010_0010 => PacketType::UNSUBSCRIBE,
-        0b1011_0000 => PacketType::UNSUBACK,
-        0b1100_0000 => PacketType::PINGREQ,
-        0b1101_0000 => PacketType::PINGRESP,
-        0b1110_0000 => PacketType::DISCONNECT,
-        0b1111_0000 => PacketType::AUTH,
-        _ => todo!(),
-    }
 }

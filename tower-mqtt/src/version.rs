@@ -55,24 +55,11 @@ impl Decoder for VersionCodec {
         let mut offset = 0;
         let mut offset = 0;
         if let Some((header, remaining_len)) = decoder::read_header(buf, &mut offset)? {
-            let r = read_packet(header, remaining_len, buf, &mut offset)?;
+            let r = decoder::read_packet(header, remaining_len, buf, &mut offset)?;
             Ok(Some(r))
         } else {
             // Don't have a full packet
             Ok(None)
-        }
-        match decode_slice(buf) {
-            Ok(Some(Packet::Connect(p))) => {
-                let p = p.protocol;
-                if p == Protocol::MQTT311 {
-                    return Ok(Some(ProtocolVersion::MQTT3));
-                } else {
-                    return Err(DecodeError::InvalidProtocolVersion);
-                }
-            }
-            // In real code you probably don't want to panic like that ;)
-            Ok(None) => panic!("not enough data"),
-            other => panic!("unexpected {:?}", other),
         }
     }
 }

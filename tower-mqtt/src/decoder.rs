@@ -1,23 +1,10 @@
 use crate::types::DecodeError;
-use crate::types::QoS;
+use crate::types::{PacketType, QoS};
 
-/// Packet type variant, without the associated data.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum PacketType {
-    Connect,
-    Connack,
-    Publish,
-    Puback,
-    Pubrec,
-    Pubrel,
-    Pubcomp,
-    Subscribe,
-    Suback,
-    Unsubscribe,
-    Unsuback,
-    Pingreq,
-    Pingresp,
-    Disconnect,
+#[derive(Debug, Clone)]
+pub struct Connecet {}
+impl Connecet {
+    fn from_buffer() {}
 }
 
 #[derive(Debug, Clone)]
@@ -31,21 +18,21 @@ pub struct Header {
 impl Header {
     pub fn new(hd: u8) -> Result<Header, DecodeError> {
         let (typ, flags_ok) = match hd >> 4 {
-            1 => (PacketType::Connect, hd & 0b1111 == 0),
-            2 => (PacketType::Connack, hd & 0b1111 == 0),
-            3 => (PacketType::Publish, true),
-            4 => (PacketType::Puback, hd & 0b1111 == 0),
-            5 => (PacketType::Pubrec, hd & 0b1111 == 0),
-            6 => (PacketType::Pubrel, hd & 0b1111 == 0b0010),
-            7 => (PacketType::Pubcomp, hd & 0b1111 == 0),
-            8 => (PacketType::Subscribe, hd & 0b1111 == 0b0010),
-            9 => (PacketType::Suback, hd & 0b1111 == 0),
-            10 => (PacketType::Unsubscribe, hd & 0b1111 == 0b0010),
-            11 => (PacketType::Unsuback, hd & 0b1111 == 0),
-            12 => (PacketType::Pingreq, hd & 0b1111 == 0),
-            13 => (PacketType::Pingresp, hd & 0b1111 == 0),
-            14 => (PacketType::Disconnect, hd & 0b1111 == 0),
-            _ => (PacketType::Connect, false),
+            1 => (PacketType::CONNECT, hd & 0b1111 == 0),
+            // 2 => (PacketType::Connack, hd & 0b1111 == 0),
+            // 3 => (PacketType::Publish, true),
+            // 4 => (PacketType::Puback, hd & 0b1111 == 0),
+            // 5 => (PacketType::Pubrec, hd & 0b1111 == 0),
+            // 6 => (PacketType::Pubrel, hd & 0b1111 == 0b0010),
+            // 7 => (PacketType::Pubcomp, hd & 0b1111 == 0),
+            // 8 => (PacketType::Subscribe, hd & 0b1111 == 0b0010),
+            // 9 => (PacketType::Suback, hd & 0b1111 == 0),
+            // 10 => (PacketType::Unsubscribe, hd & 0b1111 == 0b0010),
+            // 11 => (PacketType::Unsuback, hd & 0b1111 == 0),
+            // 12 => (PacketType::Pingreq, hd & 0b1111 == 0),
+            // 13 => (PacketType::Pingresp, hd & 0b1111 == 0),
+            // 14 => (PacketType::Disconnect, hd & 0b1111 == 0),
+            _ => (PacketType::CONNECT, false),
         };
         if !flags_ok {
             return Err(DecodeError::InvalidPacketType);
@@ -88,17 +75,17 @@ pub fn read_header(
     Err(DecodeError::InvalidPacketType)
 }
 
-fn read_packet(
+pub fn read_packet(
     header: Header,
     remaining_len: usize,
-    buf: [u8],
+    buf: &mut bytes::BytesMut,
     offset: &mut usize,
 ) -> Result<PacketType, DecodeError> {
     Ok(match header.typ {
+        PacketType::CONNECT => Connect::from_buffer(buf, offset)?.into(),
+        // PacketType::Disconnect => Packet::Disconnect,
         // PacketType::Pingreq => Packet::Pingreq,
         // PacketType::Pingresp => Packet::Pingresp,
-        // PacketType::Disconnect => Packet::Disconnect,
-        PacketType::Connect => Connect::from_buffer(buf, offset)?.into(),
         // PacketType::Connack => Connack::from_buffer(buf, offset)?.into(),
         // PacketType::Publish => Publish::from_buffer(&header, remaining_len, buf, offset)?.into(),
         // PacketType::Puback => Packet::Puback(Pid::from_buffer(buf, offset)?),
@@ -109,5 +96,8 @@ fn read_packet(
         // PacketType::Suback => Suback::from_buffer(remaining_len, buf, offset)?.into(),
         // PacketType::Unsubscribe => Unsubscribe::from_buffer(remaining_len, buf, offset)?.into(),
         // PacketType::Unsuback => Packet::Unsuback(Pid::from_buffer(buf, offset)?),
+        _ => {
+            todo!()
+        }
     })
 }
