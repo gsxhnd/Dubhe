@@ -15,10 +15,9 @@ bench = false
 tower_mqtt = {path = "../tower-mqtt"}
 tower_raft = {path = "../tower-raft"}
 
-axum = {version = "0.6"}
-clap = { version = "4.2.7", features = ["derive","env"] }
+axum = { workspace = true }
+clap = { workspace = true, features = ["derive","env"] }
 futures = { workspace = true }
-mqtt-codec = "0.3.0"
 serde = { workspace = true, features = ["derive"] }
 serde_yaml = { workspace = true}
 tokio = { workspace = true, features = ["full"] }
