@@ -94,19 +94,6 @@ pub fn read_packet(
 ) -> Result<Connecet, DecodeError> {
     Ok(match header.typ {
         PacketType::CONNECT => Connecet::from_buffer(buf, offset),
-        // PacketType::Disconnect => Packet::Disconnect,
-        // PacketType::Pingreq => Packet::Pingreq,
-        // PacketType::Pingresp => Packet::Pingresp,
-        // PacketType::Connack => Connack::from_buffer(buf, offset)?.into(),
-        // PacketType::Publish => Publish::from_buffer(&header, remaining_len, buf, offset)?.into(),
-        // PacketType::Puback => Packet::Puback(Pid::from_buffer(buf, offset)?),
-        // PacketType::Pubrec => Packet::Pubrec(Pid::from_buffer(buf, offset)?),
-        // PacketType::Pubrel => Packet::Pubrel(Pid::from_buffer(buf, offset)?),
-        // PacketType::Pubcomp => Packet::Pubcomp(Pid::from_buffer(buf, offset)?),
-        // PacketType::Subscribe => Subscribe::from_buffer(remaining_len, buf, offset)?.into(),
-        // PacketType::Suback => Suback::from_buffer(remaining_len, buf, offset)?.into(),
-        // PacketType::Unsubscribe => Unsubscribe::from_buffer(remaining_len, buf, offset)?.into(),
-        // PacketType::Unsuback => Packet::Unsuback(Pid::from_buffer(buf, offset)?),
         _ => {
             todo!()
         }
@@ -115,12 +102,12 @@ pub fn read_packet(
 
 #[cfg(test)]
 pub fn connect_codec() -> BytesMut {
-    //  固定头
+    //  header
     let mut header: Vec<u8> = vec![
-        0b00010000, //报文类型为 CONNECT，保留位为 0,
-        0b00010010, //剩余长度为 18 字节
+        0b00010000, // 报文类型为 CONNECT，保留位为 0,
+        0b00010010, // remaining size is 18 bytes
     ];
-    // 可变头
+    // header
     let mut mut_header: Vec<u8> = vec![
         0b00000100, // 协议名长度为 4 字节
         0x4D, 0x51, 0x54, 0x54,       // 协议名为 MQTT
@@ -128,12 +115,12 @@ pub fn connect_codec() -> BytesMut {
         0b11000010, //连接标志，表示清理会话、使用密码
         0x00, 0x0A, //# 保持连接时间为 10 秒
     ];
-    // 有效载荷
+    // payload
     let mut payload: Vec<u8> = vec![
-        0b00000100, // # 客户端标识符长度为 4 字节
-        0x74, 0x65, 0x73, 0x74,       // # 客户端标识符为 test
-        0b00000100, // # 密码长度为 4 字节
-        0x70, 0x61, 0x73, 0x73, //# 密码为 pass
+        0b00000100, // # client id length is 4 byte
+        0x74, 0x65, 0x73, 0x74,       // # client id is test
+        0b00000100, // # password length is 4 byte
+        0x70, 0x61, 0x73, 0x73, // password is pass
     ];
 
     let mut bytes = BytesMut::with_capacity(1024);
