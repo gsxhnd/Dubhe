@@ -4,30 +4,31 @@ use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 use tokio_tungstenite;
-use tokio_util::codec::{Framed, LinesCodec};
+use tokio_util::codec::Framed;
 use tracing::info;
 
 use crate::config::MqttConfig;
+use crate::types::ProtocolVersion;
 use crate::v3::codec as MqttCodecV3;
 use crate::v5::codec as MqttCodecV5;
-use crate::version::{ProtocolVersion, VersionCodec};
+use crate::version::VersionCodec;
 
 #[derive(Debug, Clone)]
-pub struct MqttServer<V3, V5> {
-    v3: V3,
-    v5: V5,
+pub struct MqttServer {
+    // v3: V3,
+    // v5: V5,
     config: MqttConfig,
     a: Arc<Mutex<i32>>,
     // receiver: Receiver<BrokerMessage>,
     // sender: Sender<BrokerMessage>,
 }
 
-impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
+impl MqttServer {
     pub fn new(cfg: MqttConfig) -> Self {
         // let (sender, receiver) = mpsc::channel(100);
         MqttServer {
-            v3: DefaultProtocolServer::new(ProtocolVersion::MQTT3),
-            v5: DefaultProtocolServer::new(ProtocolVersion::MQTT5),
+            // v3: DefaultProtocolServer::new(ProtocolVersion::MQTT3),
+            // v5: DefaultProtocolServer::new(ProtocolVersion::MQTT5),
             config: cfg,
             a: Arc::new(Mutex::new(0)),
             // receiver,
@@ -61,7 +62,7 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
             let (stream, addr) = tcp_listener.accept().await.unwrap();
             let mut framed = Framed::new(stream, VersionCodec);
             let mqtt_version = match framed.next().await {
-                Some(Ok(version)) => version,
+                Some(Ok(version)) => version.protocol_version,
                 Some(Err(e)) => {
                     println!("{:?}", e);
                     ProtocolVersion::MQTT5
@@ -70,6 +71,7 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
                     todo!()
                 }
             };
+
             match mqtt_version {
                 ProtocolVersion::MQTT3 => {
                     println!("mqtt verssion: 3");
@@ -88,12 +90,13 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
                     println!("send ack end")
                 }
                 ProtocolVersion::MQTT5 => {
-                    // MqttCodecV5::Codec::new()
-                    // todo!();
                     println!("mqtt verssion: 5");
                     let mut v5_codec = MqttCodecV5::Codec::new();
                     let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
                     let (packet_sink, mut packet_stream) = framed.split();
+                }
+                _ => {
+                    todo!()
                 }
             };
         }
@@ -182,16 +185,5 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
                 }
             });
         }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DefaultProtocolServer {
-    ver: ProtocolVersion,
-}
-
-impl DefaultProtocolServer {
-    fn new(ver: ProtocolVersion) -> Self {
-        Self { ver }
     }
 }

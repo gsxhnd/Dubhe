@@ -1,5 +1,5 @@
+use crate::types::ProtocolVersion;
 use crate::v5::codec::Packet;
-use crate::version::ProtocolVersion;
 use bytes::{Buf, BytesMut};
 
 use super::codec::ConnAck;

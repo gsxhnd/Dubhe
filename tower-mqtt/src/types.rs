@@ -109,7 +109,6 @@ pub enum EncodeError {
     BadTransport,
     Io(std::io::Error),
 }
-
 impl From<std::io::Error> for EncodeError {
     fn from(err: std::io::Error) -> Self {
         EncodeError::Io(err)
@@ -159,4 +158,38 @@ pub enum PacketType {
     PINGRESP = 0b1101_0000,
     DISCONNECT = 0b1110_0000,
     AUTH = 0b1111_0000,
+}
+
+#[derive(Debug, Clone)]
+pub struct ConnectPacket {
+    // Variable Header
+    pub protocol_name: String,
+    pub protocol_version: ProtocolVersion,
+    pub clean_start: bool,
+    pub keep_alive: u16,
+
+    // Properties
+    // pub session_expiry_interval: Option<SessionExpiryInterval>,
+    // pub receive_maximum: Option<ReceiveMaximum>,
+    // pub maximum_packet_size: Option<MaximumPacketSize>,
+    // pub topic_alias_maximum: Option<TopicAliasMaximum>,
+    // pub request_response_information: Option<RequestResponseInformation>,
+    // pub request_problem_information: Option<RequestProblemInformation>,
+    // pub user_properties: Vec<UserProperty>,
+    // pub authentication_method: Option<AuthenticationMethod>,
+    // pub authentication_data: Option<AuthenticationData>,
+
+    // Payload
+    pub client_id: String,
+    // pub will: Option<FinalWill>,
+    pub user_name: Option<String>,
+    pub password: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+pub enum ProtocolVersion {
+    MQTT3,
+    MQTT4,
+    MQTT5,
+    // MQISDP,
 }
