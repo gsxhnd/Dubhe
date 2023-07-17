@@ -10,7 +10,7 @@ pub const MAX_PACKET_SIZE: u32 = 0xF_FF_FF_FF;
 
 /// Quality of Service
 // #[derive(serde::Serialize, serde::Deserialize)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum QoS {
     /// At most once delivery
     ///
@@ -41,6 +41,7 @@ impl QoS {
     }
 
     pub fn from_u8(byte: u8) -> Result<QoS, DecodeError> {
+        println!("[qos from_u8] {:?}", byte);
         match byte {
             0 => Ok(QoS::AtMostOnce),
             1 => Ok(QoS::AtLeastOnce),
@@ -124,7 +125,7 @@ pub enum ProtocolError {
     _KeepAliveTimeout,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[repr(u8)]
 pub enum PacketType {
     // Connect = 1,
@@ -186,7 +187,7 @@ pub struct ConnectPacket {
     pub password: Option<String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ProtocolVersion {
     MQTT3,
     MQTT4,

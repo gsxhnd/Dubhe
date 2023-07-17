@@ -10,7 +10,7 @@ pub enum Packet {
     ConnAck(ConnAck),
     // Publish(Publish, Option<PublishProperties>),
     // PubAck(PubAck, Option<PubAckProperties>),
-    // PingReq(PingReq),
+    PingReq(PingReq),
     // PingResp(PingResp),
     // Subscribe(Subscribe, Option<SubscribeProperties>),
     // SubAck(SubAck, Option<SubAckProperties>),
@@ -234,8 +234,10 @@ pub struct ConnectPacket {
     pub password: Option<String>,
 }
 
-pub struct Codec {}
+#[derive(Debug, PartialEq, Clone, Eq)]
+pub struct PingReq {}
 
+pub struct Codec {}
 impl Codec {
     pub fn new() -> Self {
         Codec {}
@@ -243,10 +245,11 @@ impl Codec {
 }
 
 impl Decoder for Codec {
-    type Error = DecodeError;
     type Item = Packet;
+    type Error = DecodeError;
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         // TODO - Ideally we should keep a state machine to store the data we've read so far.
+        println!("v3 decode buf: {:?}", buf);
         decoder::decode_mqtt(buf)
     }
 }

@@ -3,6 +3,7 @@ pub mod v5;
 
 mod config;
 mod server;
+mod service;
 mod topic;
 mod types;
 

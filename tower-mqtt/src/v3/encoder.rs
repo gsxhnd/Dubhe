@@ -5,7 +5,6 @@ use crate::v3::codec::ConnectAckCode;
 use crate::v3::codec::Packet;
 
 pub fn encode_mqtt(packet: Packet, bytes: &mut BytesMut) -> Result<(), EncodeError> {
-    println!("{:?}", bytes);
     // bytes.resize(2048, b'0');
     match packet {
         Packet::ConnAck(conn) => {
@@ -36,6 +35,7 @@ pub fn encode_mqtt(packet: Packet, bytes: &mut BytesMut) -> Result<(), EncodeErr
         Packet::Connect(conn) => {
             todo!()
         }
+        _ => Ok(()),
     }
 }
 
