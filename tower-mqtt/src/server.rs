@@ -62,7 +62,9 @@ impl MqttServer {
         loop {
             let (stream, addr) = tcp_listener.accept().await.unwrap();
             let mut framed = Framed::new(stream, VersionCodec);
-            let connect_packet = match framed.next().await {
+            // let (mut packet_sink, mut packet_stream) = framed.split();
+            // let connect_packet: crate::version::ConnectPacket = match packet_stream.next().await {
+            let connect_packet: crate::version::ConnectPacket = match framed.next().await {
                 Some(Ok(connect)) => connect,
                 Some(Err(e)) => {
                     println!("{:?}", e);
@@ -73,37 +75,41 @@ impl MqttServer {
                     todo!()
                 }
             };
+
             info!(
                 "tcp connection established, mqtt version: {:?}",
                 connect_packet
             );
 
-            match connect_packet.protocol_version {
-                ProtocolVersion::MQTT3 => {
-                    println!("mqtt verssion: 3");
-                    let framed = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
-                    let (mut packet_sink, mut packet_stream) = framed.split();
+            // let _ = packet_sink.send().await;
+            // service::process_v3(packet_stream, packet_sink);
 
-                    let _ = packet_sink
-                        .send(MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
-                            session_present: true,
-                            code: MqttCodecV3::ConnectAckCode::Success,
-                        }))
-                        .await;
+            // match connect_packet.protocol_version {
+            //     ProtocolVersion::MQTT3 => {
+            //         println!("mqtt verssion: 3");
+            //         // let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
+            //         let (mut packet_sink, mut packet_stream) = framed.split();
 
-                    service::process_v3(packet_stream, packet_sink);
-                }
-                ProtocolVersion::MQTT5 => {
-                    println!("mqtt verssion: 5");
-                    let mut v5_codec = MqttCodecV5::Codec::new();
-                    let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
-                    let (packet_sink, packet_stream) = framed.split();
-                    service::process_v5(packet_stream, packet_sink);
-                }
-                _ => {
-                    todo!()
-                }
-            };
+            //         let _ = packet_sink
+            //             .send(MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
+            //                 session_present: true,
+            //                 code: MqttCodecV3::ConnectAckCode::Success,
+            //             }))
+            //             .await;
+
+            //         service::process_v3(packet_stream, packet_sink);
+            //     }
+            //     ProtocolVersion::MQTT5 => {
+            //         println!("mqtt verssion: 5");
+            //         let mut v5_codec = MqttCodecV5::Codec::new();
+            //         let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
+            //         let (packet_sink, packet_stream) = framed.split();
+            //         service::process_v5(packet_stream, packet_sink);
+            //     }
+            //     _ => {
+            //         todo!()
+            //     }
+            // };
         }
     }
 
