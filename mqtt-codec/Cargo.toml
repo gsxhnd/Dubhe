@@ -1,11 +1,11 @@
 [package]
-name = "mqtt_codec_v4"
+name = "mqtt_codec"
 version = "0.1.0"
 edition = "2021"
 
 
 [lib]
-name = "mqtt_codec_v4"
+name = "mqtt_codec"
 path = "src/lib.rs"    # 对象的源文件路径
 test = true            # 能否被测试，默认是 true
 doctest = true         # 文档测试是否开启，默认是 true

@@ -805,15 +805,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "mqtt-codec-v3"
+name = "mqtt_codec"
 version = "0.1.0"
 
 [[package]]
-name = "mqtt-codec-v4"
+name = "mqtt_codec_v3"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "mqtt_codec",
+ "tokio-util",
+ "tracing",
+]
+
+[[package]]
+name = "mqtt_codec_v4"
 version = "0.1.0"
 
 [[package]]
-name = "mqtt-codec-v5"
+name = "mqtt_codec_v5"
 version = "0.1.0"
 
 [[package]]

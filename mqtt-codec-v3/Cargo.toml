@@ -1,5 +1,5 @@
 [package]
-name = "mqtt-codec-v3"
+name = "mqtt_codec_v3"
 version = "0.1.0"
 edition = "2021"
 
@@ -20,3 +20,8 @@ required-features = [] # 构建对象所需的 Cargo Features (N/A for lib).
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+mqtt_codec = {path = "../mqtt-codec"}
+
+bytes = { workspace=true, features = ["serde"] }
+tokio-util = {workspace = true, features = ["codec"]}
+tracing = { workspace = true }
