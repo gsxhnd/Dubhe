@@ -1,9 +1,6 @@
 [workspace]
 members = [
     "mqtt-codec",
-    "mqtt-codec-v3",
-    "mqtt-codec-v4",
-    "mqtt-codec-v5",
     "tower-mqtt",
     "tower-raft",
     "tower"
@@ -26,9 +23,6 @@ rust-version = "1.68"
 
 [path]
 mqtt_code_types = { path = "mqtt-codec" }
-mqtt_code_v3 = { path = "mqtt-codec-v3" }
-mqtt_code_v4 = { path = "mqtt-codec-v4" }
-mqtt_code_v5 = { path = "mqtt-codec-v5" }
 tower_mqtt = { path ="tower-mqtt" }
 tower_raft = { path ="tower-raft" }
 

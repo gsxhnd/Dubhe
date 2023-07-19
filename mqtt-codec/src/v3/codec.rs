@@ -2,9 +2,8 @@ use bytes::{Bytes, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
 use tracing::info;
 
-use mqtt_codec::{DecodeError, EncodeError};
-
-use crate::{decoder, encoder};
+use crate::types::{DecodeError, EncodeError};
+use crate::v3::{decoder, encoder};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Packet {

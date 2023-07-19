@@ -17,6 +17,8 @@ crate-type = ["rlib","cdylib","staticlib"]   # 生成的包类型
 required-features = [] # 构建对象所需的 Cargo Features (N/A for lib).
 
 [dependencies]
+mqtt_codec = { path = "../mqtt-codec" }
+
 bytes = { workspace = true, features = ["serde"] }
 futures = { workspace = true }
 futures-util = { workspace = true }

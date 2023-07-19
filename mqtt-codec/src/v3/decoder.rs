@@ -1,6 +1,6 @@
-use crate::codec::ConnectPacket;
-use crate::codec::Packet;
-use mqtt_codec::{DecodeError, EncodeError};
+use crate::types::{DecodeError, EncodeError};
+use crate::v3::codec::ConnectPacket;
+use crate::v3::codec::Packet;
 
 use bytes::BytesMut;
 
