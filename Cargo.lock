@@ -805,6 +805,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "mqtt-codec-v3"
+version = "0.1.0"
+
+[[package]]
+name = "mqtt-codec-v4"
+version = "0.1.0"
+
+[[package]]
+name = "mqtt-codec-v5"
+version = "0.1.0"
+
+[[package]]
 name = "mqttrs"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
