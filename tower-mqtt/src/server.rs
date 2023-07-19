@@ -1,4 +1,5 @@
 // use futures_util::sink::Send;
+use futures::{Sink, Stream};
 use futures_util::{SinkExt, StreamExt};
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -9,10 +10,10 @@ use tracing::info;
 
 use crate::config::MqttConfig;
 use crate::service;
-use crate::types::ProtocolVersion;
+use crate::types::{ConnectPacket, DecodeError, EncodeError, ProtocolVersion};
 use crate::v3::codec as MqttCodecV3;
 use crate::v5::codec as MqttCodecV5;
-use crate::version::VersionCodec;
+use crate::version::{ConnectAckCode, ConnectAckPacket, VersionCodec};
 
 #[derive(Debug, Clone)]
 pub struct MqttServer {
@@ -81,35 +82,44 @@ impl MqttServer {
                 connect_packet
             );
 
-            // let _ = packet_sink.send().await;
+            // let _ = packet_sink
+            //     .send(ConnectAckPacket {
+            //         session_present: true,
+            //         code: ConnectAckCode::Success,
+            //     })
+            //     .await;
+            // process(packet_stream, packet_sink)
             // service::process_v3(packet_stream, packet_sink);
 
-            // match connect_packet.protocol_version {
-            //     ProtocolVersion::MQTT3 => {
-            //         println!("mqtt verssion: 3");
-            //         // let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
-            //         let (mut packet_sink, mut packet_stream) = framed.split();
+            match connect_packet.protocol_version {
+                ProtocolVersion::MQTT3 => {
+                    println!("mqtt verssion: 3");
+                    // let a = framed.read_buffer();
+                    // println!("test read buffer: {:?}", a);
 
-            //         let _ = packet_sink
-            //             .send(MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
-            //                 session_present: true,
-            //                 code: MqttCodecV3::ConnectAckCode::Success,
-            //             }))
-            //             .await;
+                    let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
+                    let (mut packet_sink, mut packet_stream) = f.split();
+                    // packet_stream.clear（）
+                    // let _ = packet_sink
+                    //     .send(MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
+                    //         session_present: true,
+                    //         code: MqttCodecV3::ConnectAckCode::Success,
+                    //     }))
+                    //     .await;
 
-            //         service::process_v3(packet_stream, packet_sink);
-            //     }
-            //     ProtocolVersion::MQTT5 => {
-            //         println!("mqtt verssion: 5");
-            //         let mut v5_codec = MqttCodecV5::Codec::new();
-            //         let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
-            //         let (packet_sink, packet_stream) = framed.split();
-            //         service::process_v5(packet_stream, packet_sink);
-            //     }
-            //     _ => {
-            //         todo!()
-            //     }
-            // };
+                    service::process_v3(packet_stream, packet_sink);
+                }
+                ProtocolVersion::MQTT5 => {
+                    println!("mqtt verssion: 5");
+                    let mut v5_codec = MqttCodecV5::Codec::new();
+                    let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
+                    let (packet_sink, packet_stream) = framed.split();
+                    service::process_v5(packet_stream, packet_sink);
+                }
+                _ => {
+                    todo!()
+                }
+            };
         }
     }
 
@@ -197,4 +207,19 @@ impl MqttServer {
             });
         }
     }
+}
+
+type PacketResult = Result<crate::version::ConnectPacket, DecodeError>;
+pub fn process<ST, SI>(mut packet_stream: ST, packet_sink: SI)
+where
+    ST: Stream<Item = PacketResult> + Unpin + Send + Sync + 'static,
+    SI: Sink<ConnectAckPacket, Error = EncodeError> + Unpin + Send + Sync + 'static,
+{
+    tokio::spawn(async move {
+        match packet_stream.next() {
+            _ => {
+                println!("process next packet");
+            }
+        }
+    });
 }

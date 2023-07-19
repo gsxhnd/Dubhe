@@ -1,8 +1,7 @@
 use bytes::{BufMut, BytesMut};
-use tokio_tungstenite::tungstenite::protocol;
-use tokio_util::codec::Decoder;
+use tokio_util::codec::{Decoder, Encoder};
 
-use crate::types::{DecodeError, PacketType, ProtocolVersion, QoS};
+use crate::types::{DecodeError, EncodeError, PacketType, ProtocolVersion, QoS};
 
 pub struct VersionCodec;
 
@@ -11,6 +10,7 @@ impl Decoder for VersionCodec {
     type Error = DecodeError;
 
     fn decode(&mut self, buf: &mut bytes::BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+        println!("version codec decode buf: {:?}", buf);
         let mut offset = 0;
         if let Some((header, remaining_len)) = read_header(buf, &mut offset)? {
             println!("connect header type: {:?}", header.typ);
@@ -22,6 +22,17 @@ impl Decoder for VersionCodec {
     }
 }
 
+
+
+fn connect_code(return_code: ConnectAckCode) -> u8 {
+    match return_code {
+        ConnectAckCode::Success => 0,
+        ConnectAckCode::RefusedProtocolVersion => 1,
+        ConnectAckCode::BadUserNamePassword => 4,
+        ConnectAckCode::NotAuthorized => 5,
+        _ => unreachable!(),
+    }
+}
 #[derive(Debug, PartialEq, Clone)]
 pub struct ConnectPacket {
     // Variable Header
@@ -68,6 +79,53 @@ impl ConnectPacket {
             client_id: "".to_string(),
             user_name: None,
             password: None,
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct ConnectAckPacket {
+    pub session_present: bool,
+    pub code: ConnectAckCode,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnectAckCode {
+    Success,
+    RefusedProtocolVersion,
+    // BadClientId,
+    // ServiceUnavailable,
+    // UnspecifiedError,
+    // MalformedPacket,
+    // ProtocolError,
+    // ImplementationSpecificError,
+    // UnsupportedProtocolVersion,
+    ClientIdentifierNotValid,
+    BadUserNamePassword,
+    NotAuthorized,
+    ServerUnavailable,
+    // ServerBusy,
+    // Banned,
+    // BadAuthenticationMethod,
+    // TopicNameInvalid,
+    // PacketTooLarge,
+    // QuotaExceeded,
+    // PayloadFormatInvalid,
+    // RetainNotSupported,
+    // QoSNotSupported,
+    // UseAnotherServer,
+    // ServerMoved,
+    // ConnectionRateExceeded,
+}
+impl ConnectAckCode {
+    pub fn to_u8(&self) -> u8 {
+        match *self {
+            ConnectAckCode::Success => 0,
+            ConnectAckCode::RefusedProtocolVersion => 1,
+            ConnectAckCode::ClientIdentifierNotValid => 2,
+            ConnectAckCode::ServerUnavailable => 3,
+            ConnectAckCode::BadUserNamePassword => 4,
+            ConnectAckCode::NotAuthorized => 5,
         }
     }
 }

@@ -1,5 +1,6 @@
 use bytes::{Bytes, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
+use tracing::info;
 
 use crate::types::{DecodeError, EncodeError};
 use crate::v3::{decoder, encoder};
@@ -249,7 +250,7 @@ impl Decoder for Codec {
     type Error = DecodeError;
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         // TODO - Ideally we should keep a state machine to store the data we've read so far.
-        println!("v3 decode buf: {:?}", buf);
+        info!("v3 decode buf: {:?}", buf);
         decoder::decode_mqtt(buf)
     }
 }
