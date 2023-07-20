@@ -81,8 +81,8 @@ impl MqttServer {
             };
 
             info!(
-                "tcp connection established, mqtt version: {:?}",
-                connect_packet
+                "tcp new connection established, mqtt version: {:?}",
+                connect_packet.protocol_version
             );
 
             // let _ = packet_sink
@@ -97,8 +97,15 @@ impl MqttServer {
             match connect_packet.protocol_version {
                 ProtocolVersion::MQTT3 => {
                     let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
-                    let (packet_sink, packet_stream) = f.split();
-                    service::process_v3(packet_stream, packet_sink);
+                    let (mut packet_sink, packet_stream) = f.split();
+                    let conn_ack_packet = MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
+                        session_present: true,
+                        code: MqttCodecV3::ConnectAckCode::Success,
+                    });
+                    let _ = packet_sink.send(conn_ack_packet).await;
+                    tokio::spawn(async move {
+                        service::process_v3(packet_stream, packet_sink).await;
+                    });
                 }
                 ProtocolVersion::MQTT5 => {
                     println!("mqtt verssion: 5");

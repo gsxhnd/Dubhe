@@ -6,6 +6,9 @@ use bytes::BytesMut;
 
 pub fn decode_mqtt(bytes: &mut BytesMut) -> Result<Option<Packet>, DecodeError> {
     println!("v3 codec bytes: {:?}", bytes);
+    if bytes.is_empty() {
+        return Ok(None);
+    }
 
     let p = Packet::Connect(ConnectPacket {
         protocol_name: "".to_string(),
