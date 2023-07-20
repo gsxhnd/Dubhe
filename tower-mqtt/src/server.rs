@@ -8,11 +8,12 @@ use tokio_tungstenite;
 use tokio_util::codec::Framed;
 use tracing::info;
 
+use mqtt_codec::types::{ConnectPacket, DecodeError, EncodeError, ProtocolVersion};
+use mqtt_codec::v3::codec as MqttCodecV3;
+use mqtt_codec::v5::codec as MqttCodecV5;
+
 use crate::config::MqttConfig;
 use crate::service;
-use crate::types::{ConnectPacket, DecodeError, EncodeError, ProtocolVersion};
-use crate::v3::codec as MqttCodecV3;
-use crate::v5::codec as MqttCodecV5;
 use crate::version::{ConnectAckCode, ConnectAckPacket, VersionCodec};
 
 #[derive(Debug, Clone)]

@@ -1,7 +1,7 @@
 use bytes::{BufMut, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
 
-use crate::types::{DecodeError, EncodeError, PacketType, ProtocolVersion, QoS};
+use mqtt_codec::types::{DecodeError, EncodeError, PacketType, ProtocolVersion, QoS};
 
 pub struct VersionCodec;
 
@@ -21,8 +21,6 @@ impl Decoder for VersionCodec {
         }
     }
 }
-
-
 
 fn connect_code(return_code: ConnectAckCode) -> u8 {
     match return_code {

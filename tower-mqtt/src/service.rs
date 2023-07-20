@@ -2,10 +2,10 @@ use futures::{Sink, Stream};
 use futures_util::{SinkExt, StreamExt};
 use tracing::info;
 
-use crate::types::{DecodeError, EncodeError};
-use crate::v3::codec as MqttCodecV3;
-use crate::v3::codec::Packet as PacketV3;
-use crate::v5::codec::Packet as PacketV5;
+use mqtt_codec::types::{DecodeError, EncodeError};
+use mqtt_codec::v3::codec as MqttCodecV3;
+use mqtt_codec::v3::codec::Packet as PacketV3;
+use mqtt_codec::v5::codec::Packet as PacketV5;
 
 type PacketV3Result = Result<PacketV3, DecodeError>;
 type PacketV5Result = Result<PacketV5, DecodeError>;
