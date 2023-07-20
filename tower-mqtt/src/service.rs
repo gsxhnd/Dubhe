@@ -17,19 +17,18 @@ where
 {
     tokio::spawn(async move {
         match packet_stream.next().await {
-            Some(Ok(PacketV3::Connect(p))) => {
+            Some(Ok(PacketV3::Connect(_packet))) => {
                 info!("v3 codec get connection req");
-                // println!("process_v3 {:?}", p);
-                let _ = packet_sink
-                    .send(MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
-                        session_present: true,
-                        code: MqttCodecV3::ConnectAckCode::Success,
-                    }))
-                    .await;
+                let conn_ack_packet = MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
+                    session_present: true,
+                    code: MqttCodecV3::ConnectAckCode::Success,
+                });
+                info!("conn ack packet: {:?}", conn_ack_packet);
+                let _ = packet_sink.send(conn_ack_packet).await;
             }
-            Some(Ok(PacketV3::ConnAck(p))) => {}
-            Some(Ok(PacketV3::PingReq(p))) => {}
-            Some(Err(err)) => {
+            Some(Ok(PacketV3::ConnAck(_packet))) => {}
+            Some(Ok(PacketV3::PingReq(_packet))) => {}
+            Some(Err(_err)) => {
                 todo!()
             }
             None => {

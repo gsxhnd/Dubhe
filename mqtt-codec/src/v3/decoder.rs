@@ -21,6 +21,7 @@ pub fn decode_mqtt(bytes: &mut BytesMut) -> Result<Option<Packet>, DecodeError> 
         user_name: None,
         password: None,
     });
+    bytes.clear();
 
     Ok(Some(p))
 }
