@@ -33,7 +33,6 @@ bytes = { version = "1.4", features = ["serde"] }
 clap = { version = "4.3", features = ["derive","env"] }
 futures = { version = "0.3" }
 futures-util = { version = "0.3" }
-mqttrs = { version = "0.4.1", features = [ "derive" ] }
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 tokio = { version = "1.28", features = ["full"] }

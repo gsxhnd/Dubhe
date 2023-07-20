@@ -22,7 +22,6 @@ mqtt_codec = { path = "../mqtt-codec" }
 bytes = { workspace = true, features = ["serde"] }
 futures = { workspace = true }
 futures-util = { workspace = true }
-mqttrs = { workspace= true, features = [ "derive" ] }
 serde = { workspace = true, features = ["derive"] }
 serde_yaml = { workspace = true}
 tokio = { workspace = true, features = ["full"] }
