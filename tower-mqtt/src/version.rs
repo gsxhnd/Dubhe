@@ -1,7 +1,8 @@
-use bytes::{BufMut, BytesMut};
-use tokio_util::codec::{Decoder, Encoder};
+use bytes::BytesMut;
+// use bytes::{BufMut, BytesMut};
+use tokio_util::codec::Decoder;
 
-use mqtt_codec::types::{DecodeError, EncodeError, PacketType, ProtocolVersion, QoS};
+use mqtt_codec::types::{DecodeError, PacketType, ProtocolVersion, QoS};
 
 pub struct VersionCodec;
 
@@ -9,7 +10,7 @@ impl Decoder for VersionCodec {
     type Item = ConnectPacket;
     type Error = DecodeError;
 
-    fn decode(&mut self, buf: &mut bytes::BytesMut) -> Result<Option<Self::Item>, Self::Error> {
+    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         println!("version codec decode buf: {:?}", buf);
         let mut offset = 0;
         if let Some((header, remaining_len)) = read_header(buf, &mut offset)? {
@@ -22,15 +23,6 @@ impl Decoder for VersionCodec {
     }
 }
 
-fn connect_code(return_code: ConnectAckCode) -> u8 {
-    match return_code {
-        ConnectAckCode::Success => 0,
-        ConnectAckCode::RefusedProtocolVersion => 1,
-        ConnectAckCode::BadUserNamePassword => 4,
-        ConnectAckCode::NotAuthorized => 5,
-        _ => unreachable!(),
-    }
-}
 #[derive(Debug, PartialEq, Clone)]
 pub struct ConnectPacket {
     // Variable Header
@@ -63,7 +55,7 @@ pub struct ConnectPacket {
     pub password: Option<String>,
 }
 impl ConnectPacket {
-    fn from_buffer(buf: &mut bytes::BytesMut, offset: &mut usize) -> Self {
+    fn from_buffer(_buf: &mut bytes::BytesMut, _offset: &mut usize) -> Self {
         ConnectPacket {
             protocol_name: "".to_string(),
             protocol_version: ProtocolVersion::MQTT3,
@@ -77,53 +69,6 @@ impl ConnectPacket {
             client_id: "".to_string(),
             user_name: None,
             password: None,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct ConnectAckPacket {
-    pub session_present: bool,
-    pub code: ConnectAckCode,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ConnectAckCode {
-    Success,
-    RefusedProtocolVersion,
-    // BadClientId,
-    // ServiceUnavailable,
-    // UnspecifiedError,
-    // MalformedPacket,
-    // ProtocolError,
-    // ImplementationSpecificError,
-    // UnsupportedProtocolVersion,
-    ClientIdentifierNotValid,
-    BadUserNamePassword,
-    NotAuthorized,
-    ServerUnavailable,
-    // ServerBusy,
-    // Banned,
-    // BadAuthenticationMethod,
-    // TopicNameInvalid,
-    // PacketTooLarge,
-    // QuotaExceeded,
-    // PayloadFormatInvalid,
-    // RetainNotSupported,
-    // QoSNotSupported,
-    // UseAnotherServer,
-    // ServerMoved,
-    // ConnectionRateExceeded,
-}
-impl ConnectAckCode {
-    pub fn to_u8(&self) -> u8 {
-        match *self {
-            ConnectAckCode::Success => 0,
-            ConnectAckCode::RefusedProtocolVersion => 1,
-            ConnectAckCode::ClientIdentifierNotValid => 2,
-            ConnectAckCode::ServerUnavailable => 3,
-            ConnectAckCode::BadUserNamePassword => 4,
-            ConnectAckCode::NotAuthorized => 5,
         }
     }
 }
@@ -199,7 +144,7 @@ pub fn read_header(
 
 pub fn read_packet(
     header: Header,
-    remaining_size: usize,
+    _remaining_size: usize,
     buf: &mut bytes::BytesMut,
     offset: &mut usize,
 ) -> Result<ConnectPacket, DecodeError> {
@@ -211,6 +156,7 @@ pub fn read_packet(
 
 #[cfg(test)]
 pub fn connect_codec() -> BytesMut {
+    use bytes::BufMut;
     // Fixed header
     let mut header: Vec<u8> = vec![
         0b00010000, // 报文类型为 CONNECT，保留位为 0,
@@ -260,5 +206,5 @@ fn version_read_packet() {
         .unwrap()
         .expect("read header error");
 
-    let a = read_packet(header, reaming_size, &mut buf, &mut offset);
+    let _ = read_packet(header, reaming_size, &mut buf, &mut offset);
 }

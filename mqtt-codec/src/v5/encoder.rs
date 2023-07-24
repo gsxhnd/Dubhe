@@ -1,10 +1,7 @@
-use crate::types::ProtocolVersion;
-use crate::v5::codec::Packet;
-use bytes::{Buf, BytesMut};
+use crate::v5::packet::*;
+use bytes::BytesMut;
 
-use super::codec::ConnAck;
-
-pub fn encode_mqtt(packet: &Packet, bytes: &mut BytesMut, protocol_version: ProtocolVersion) {
+pub fn encode_mqtt(_packet: &Packet, _bytes: &mut BytesMut) {
     todo!()
     // let remaining_length = packet.calculate_size(protocol_version);
     // let packet_size =
@@ -36,10 +33,4 @@ pub fn encode_mqtt(packet: &Packet, bytes: &mut BytesMut, protocol_version: Prot
     //     Packet::Disconnect(p) => encode_disconnect(p, bytes, protocol_version),
     //     Packet::Authenticate(p) => encode_authenticate(p, bytes, protocol_version),
     // }
-}
-
-fn encode_slice() {}
-
-fn encode_connect_ack(packet: &ConnAck, b: &mut BytesMut) {
-    // packet.to_buff
 }

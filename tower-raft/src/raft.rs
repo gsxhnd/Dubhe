@@ -20,7 +20,7 @@ pub trait Store {
 pub struct MailBox(mpsc::Sender<Message>);
 
 impl MailBox {
-    pub async fn send(&self, message: Vec<u8>) -> Result<Vec<u8>, String> {
+    pub async fn _send(&self, message: Vec<u8>) -> Result<Vec<u8>, String> {
         let (tx, rx) = oneshot::channel();
         let proposal = Message::Propose {
             proposal: message,

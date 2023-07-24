@@ -1,14 +1,13 @@
-use crate::types::EncodeError;
 use bytes::Bytes;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Packet {
     Connect(ConnectPacket),
-    ConnAck(ConnAckPacket),
+    ConnAck(ConnAck, Option<ConnAckProperties>),
     // Publish(Publish, Option<PublishProperties>),
     // PubAck(PubAck, Option<PubAckProperties>),
-    PingReq(PingReq),
-    PingResp(PingResp),
+    // PingReq(PingReq),
+    // PingResp(PingResp),
     // Subscribe(Subscribe, Option<SubscribeProperties>),
     // SubAck(SubAck, Option<SubAckProperties>),
     // PubRec(PubRec, Option<PubRecProperties>),
@@ -18,110 +17,6 @@ pub enum Packet {
     // UnsubAck(UnsubAck, Option<UnsubAckProperties>),
     // Disconnect(Disconnect, Option<DisconnectProperties>),
 }
-
-// Control Packets
-#[derive(Debug, PartialEq, Clone, Eq)]
-pub struct ConnectPacket {
-    // Variable Header
-    pub protocol_name: String,
-    // pub protocol_version: ProtocolVersion,
-    pub clean_start: bool,
-    pub keep_alive: u16,
-
-    // Properties
-    // pub session_expiry_interval: Option<SessionExpiryInterval>,
-    // pub receive_maximum: Option<ReceiveMaximum>,
-    // pub maximum_packet_size: Option<MaximumPacketSize>,
-    // pub topic_alias_maximum: Option<TopicAliasMaximum>,
-    // pub request_response_information: Option<RequestResponseInformation>,
-    // pub request_problem_information: Option<RequestProblemInformation>,
-    // pub user_properties: Vec<UserProperty>,
-    // pub authentication_method: Option<AuthenticationMethod>,
-    // pub authentication_data: Option<AuthenticationData>,
-
-    // Payload
-    pub client_id: String,
-    // pub will: Option<FinalWill>,
-    pub user_name: Option<String>,
-    pub password: Option<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ConnAckPacket {
-    pub session_present: bool,
-    pub code: ConnectAckCode,
-}
-
-impl ConnAckPacket {
-    fn _to_buffer(&self, buf: &mut [u8], offset: &mut usize) -> Result<(), EncodeError> {
-        println!("start conn ack to buffer: {}", buf[*offset..].len());
-        // check_remaining(buf, offset, 4)?;
-        // if buf[*offset..].len() < 4 {
-        //     return Err(EncodeError::BadTransport);
-        // }
-
-        let header: u8 = 0b00100000;
-        let length: u8 = 2;
-        let mut flags: u8 = 0b00000000;
-        if self.session_present {
-            flags |= 0b1;
-        };
-        let rc = self.code.to_u8();
-        write_u8(buf, offset, header)?;
-        write_u8(buf, offset, length)?;
-        write_u8(buf, offset, flags)?;
-        write_u8(buf, offset, rc)?;
-        println!("{:?}", buf);
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ConnectAckCode {
-    Success,
-    RefusedProtocolVersion,
-    // BadClientId,
-    // ServiceUnavailable,
-    // UnspecifiedError,
-    // MalformedPacket,
-    // ProtocolError,
-    // ImplementationSpecificError,
-    // UnsupportedProtocolVersion,
-    ClientIdentifierNotValid,
-    BadUserNamePassword,
-    NotAuthorized,
-    ServerUnavailable,
-    // ServerBusy,
-    // Banned,
-    // BadAuthenticationMethod,
-    // TopicNameInvalid,
-    // PacketTooLarge,
-    // QuotaExceeded,
-    // PayloadFormatInvalid,
-    // RetainNotSupported,
-    // QoSNotSupported,
-    // UseAnotherServer,
-    // ServerMoved,
-    // ConnectionRateExceeded,
-}
-impl ConnectAckCode {
-    pub fn to_u8(&self) -> u8 {
-        match *self {
-            ConnectAckCode::Success => 0,
-            ConnectAckCode::RefusedProtocolVersion => 1,
-            ConnectAckCode::ClientIdentifierNotValid => 2,
-            ConnectAckCode::ServerUnavailable => 3,
-            ConnectAckCode::BadUserNamePassword => 4,
-            ConnectAckCode::NotAuthorized => 5,
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Clone, Eq)]
-pub struct PingReq {}
-
-#[derive(Debug, PartialEq, Clone, Eq)]
-pub struct PingResp {}
 
 // Acknowledgement to QoS1 publish
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -142,6 +37,17 @@ pub enum PubAckReason {
     PacketIdentifierInUse,
     QuotaExceeded,
     PayloadFormatInvalid,
+}
+
+/// Connection packet initiated by the client
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Connect {
+    /// Mqtt keep alive time
+    pub keep_alive: u16,
+    /// Client Id
+    pub client_id: String,
+    /// Clean session. Asks the broker to clear previous state
+    pub clean_session: bool,
 }
 
 /// Quality of service
@@ -200,6 +106,41 @@ pub struct ConnectProperties {
     pub authentication_data: Option<Bytes>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnectAckCode {
+    Success,
+    RefusedProtocolVersion,
+    BadClientId,
+    ServiceUnavailable,
+    UnspecifiedError,
+    MalformedPacket,
+    ProtocolError,
+    ImplementationSpecificError,
+    UnsupportedProtocolVersion,
+    ClientIdentifierNotValid,
+    BadUserNamePassword,
+    NotAuthorized,
+    ServerUnavailable,
+    ServerBusy,
+    Banned,
+    BadAuthenticationMethod,
+    TopicNameInvalid,
+    PacketTooLarge,
+    QuotaExceeded,
+    PayloadFormatInvalid,
+    RetainNotSupported,
+    QoSNotSupported,
+    UseAnotherServer,
+    ServerMoved,
+    ConnectionRateExceeded,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConnAck {
+    pub session_present: bool,
+    pub code: ConnectAckCode,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConnAckProperties {
     pub session_expiry_interval: Option<u32>,
@@ -221,8 +162,29 @@ pub struct ConnAckProperties {
     pub authentication_data: Option<Bytes>,
 }
 
-fn write_u8(buf: &mut [u8], offset: &mut usize, val: u8) -> Result<(), EncodeError> {
-    buf[*offset] = val;
-    *offset += 1;
-    Ok(())
+// Control Packets
+#[derive(Debug, PartialEq, Clone, Eq)]
+pub struct ConnectPacket {
+    // Variable Header
+    pub protocol_name: String,
+    // pub protocol_version: ProtocolVersion,
+    pub clean_start: bool,
+    pub keep_alive: u16,
+
+    // Properties
+    // pub session_expiry_interval: Option<SessionExpiryInterval>,
+    // pub receive_maximum: Option<ReceiveMaximum>,
+    // pub maximum_packet_size: Option<MaximumPacketSize>,
+    // pub topic_alias_maximum: Option<TopicAliasMaximum>,
+    // pub request_response_information: Option<RequestResponseInformation>,
+    // pub request_problem_information: Option<RequestProblemInformation>,
+    // pub user_properties: Vec<UserProperty>,
+    // pub authentication_method: Option<AuthenticationMethod>,
+    // pub authentication_data: Option<AuthenticationData>,
+
+    // Payload
+    pub client_id: String,
+    // pub will: Option<FinalWill>,
+    pub user_name: Option<String>,
+    pub password: Option<String>,
 }

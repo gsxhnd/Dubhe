@@ -31,7 +31,7 @@ pub fn encode_mqtt(packet: Packet, bytes: &mut BytesMut) -> Result<(), EncodeErr
             bytes.put_u8(connect_code(conn.code));
             Ok(())
         }
-        Packet::Connect(conn) => {
+        Packet::Connect(_conn) => {
             todo!()
         }
         _ => Ok(()),
