@@ -1,11 +1,9 @@
-use crate::types::{DecodeError, EncodeError};
-use crate::v3::codec::ConnectPacket;
-use crate::v3::codec::Packet;
+use crate::types::DecodeError;
+use crate::v3::packet::*;
 
 use bytes::BytesMut;
 
 pub fn decode_mqtt(bytes: &mut BytesMut) -> Result<Option<Packet>, DecodeError> {
-    println!("v3 codec bytes: {:?}", bytes);
     if bytes.is_empty() {
         return Ok(None);
     }

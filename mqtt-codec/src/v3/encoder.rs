@@ -1,8 +1,7 @@
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::{BufMut, BytesMut};
 
-use crate::types::{DecodeError, EncodeError};
-use crate::v3::codec::ConnectAckCode;
-use crate::v3::codec::Packet;
+use crate::types::EncodeError;
+use crate::v3::packet::*;
 
 pub fn encode_mqtt(packet: Packet, bytes: &mut BytesMut) -> Result<(), EncodeError> {
     // bytes.resize(2048, b'0');

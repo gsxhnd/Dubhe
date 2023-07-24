@@ -10,9 +10,9 @@ use tracing::info;
 
 use mqtt_codec::types::{ConnectPacket, DecodeError, EncodeError, ProtocolVersion};
 use mqtt_codec::v3::codec as MqttCodecV3;
-use mqtt_codec::v3::codec::Packet as PacketV3;
+// use mqtt_codec::v3::codec::Packet as PacketV3;
 use mqtt_codec::v5::codec as MqttCodecV5;
-use mqtt_codec::v5::codec::Packet as PacketV5;
+// use mqtt_codec::v5::codec::Packet as PacketV5;
 
 use crate::config::MqttConfig;
 use crate::service;
@@ -97,12 +97,12 @@ impl MqttServer {
             match connect_packet.protocol_version {
                 ProtocolVersion::MQTT3 => {
                     let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
-                    let (mut packet_sink, packet_stream) = f.split();
-                    let conn_ack_packet = MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
-                        session_present: true,
-                        code: MqttCodecV3::ConnectAckCode::Success,
-                    });
-                    let _ = packet_sink.send(conn_ack_packet).await;
+                    let (packet_sink, packet_stream) = f.split();
+                    // let conn_ack_packet = MqttCodecV3::Packet::ConnAck(MqttCodecV3::ConnAck {
+                    //     session_present: true,
+                    //     code: MqttCodecV3::ConnectAckCode::Success,
+                    // });
+                    // let _ = packet_sink.send(conn_ack_packet).await;
                     tokio::spawn(async move {
                         service::process_v3(packet_stream, packet_sink).await;
                     });
