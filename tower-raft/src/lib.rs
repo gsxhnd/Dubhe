@@ -1,7 +1,10 @@
-pub mod eraftpb;
-pub mod message;
-pub mod raft;
-pub mod raft_node;
-pub mod raft_server;
-pub(crate) mod raft_service;
-// pub mod storage;
+mod config;
+mod eraftpb;
+mod message;
+mod raft;
+mod raft_node;
+mod raft_server;
+mod raft_service;
+
+pub use self::config::RaftConfig;
+pub use self::raft_server::RaftServer;

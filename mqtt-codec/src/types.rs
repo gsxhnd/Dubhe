@@ -1,13 +1,16 @@
-// pub const MQTT: &[u8] = b"MQTT";
-// pub const MQTT_LEVEL_3: u8 = 4;
-// pub const MQTT_LEVEL_5: u8 = 5;
-// pub const WILL_QOS_SHIFT: u8 = 3;
+pub const MQTT: &[u8] = b"MQTT";
+pub const MQISDP: &[u8] = b"MQIsdp";
+pub const MQTT_LEVEL_31: u8 = 3;
+pub const MQTT_LEVEL_311: u8 = 4;
+pub const MQTT_LEVEL_5: u8 = 5;
+pub const WILL_QOS_SHIFT: u8 = 3;
 
-/// Max possible packet size
-// pub const MAX_PACKET_SIZE: u32 = 0xF_FF_FF_FF;
+// Max possible packet size
+pub const MAX_PACKET_SIZE: u32 = 0xF_FF_FF_FF;
 
 /// Quality of Service
-#[derive(serde::Serialize, serde::Deserialize)]
+// #[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum QoS {
     /// At most once delivery
     ///
@@ -28,6 +31,25 @@ pub enum QoS {
     /// There is an increased overhead associated with this quality of service.
     ExactlyOnce = 2,
 }
+impl QoS {
+    pub fn to_u8(&self) -> u8 {
+        match *self {
+            QoS::AtMostOnce => 0,
+            QoS::AtLeastOnce => 1,
+            QoS::ExactlyOnce => 2,
+        }
+    }
+
+    pub fn from_u8(byte: u8) -> Result<QoS, DecodeError> {
+        println!("[qos from_u8] {:?}", byte);
+        match byte {
+            0 => Ok(QoS::AtMostOnce),
+            1 => Ok(QoS::AtLeastOnce),
+            2 => Ok(QoS::ExactlyOnce),
+            _n => Err(DecodeError::InvalidQoS),
+        }
+    }
+}
 
 // pub struct ConnectFlags: u8 {
 // }
@@ -42,32 +64,13 @@ pub enum QoS {
 // }
 // const SESSION_PRESENT: u8 = 0b0000_0001;
 
-// pub(super) mod packet_type {
-//     pub(crate) const CONNECT: u8 = 0b0001_0000;
-//     pub(crate) const CONNACK: u8 = 0b0010_0000;
-//     pub(crate) const PUBLISH_START: u8 = 0b0011_0000;
-//     pub(crate) const PUBLISH_END: u8 = 0b0011_1111;
-//     pub(crate) const PUBACK: u8 = 0b0100_0000;
-//     pub(crate) const PUBREC: u8 = 0b0101_0000;
-//     pub(crate) const PUBREL: u8 = 0b0110_0010;
-//     pub(crate) const PUBCOMP: u8 = 0b0111_0000;
-//     pub(crate) const SUBSCRIBE: u8 = 0b1000_0010;
-//     pub(crate) const SUBACK: u8 = 0b1001_0000;
-//     pub(crate) const UNSUBSCRIBE: u8 = 0b1010_0010;
-//     pub(crate) const UNSUBACK: u8 = 0b1011_0000;
-//     pub(crate) const PINGREQ: u8 = 0b1100_0000;
-//     pub(crate) const PINGRESP: u8 = 0b1101_0000;
-//     pub(crate) const DISCONNECT: u8 = 0b1110_0000;
-//     pub(crate) const AUTH: u8 = 0b1111_0000;
-// }
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub(crate) struct FixedHeader {
+pub struct FixedHeader {
     /// Fixed Header byte
-    pub(crate) first_byte: u8,
+    pub first_byte: u8,
     /// the number of bytes remaining within the current packet,
     /// including data in the variable header and the payload.
-    pub(crate) remaining_length: u32,
+    pub remaining_length: u32,
 }
 
 #[derive(Debug)]
@@ -107,7 +110,6 @@ pub enum EncodeError {
     BadTransport,
     Io(std::io::Error),
 }
-
 impl From<std::io::Error> for EncodeError {
     fn from(err: std::io::Error) -> Self {
         EncodeError::Io(err)
@@ -123,7 +125,7 @@ pub enum ProtocolError {
     _KeepAliveTimeout,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[repr(u8)]
 pub enum PacketType {
     // Connect = 1,
@@ -159,23 +161,36 @@ pub enum PacketType {
     AUTH = 0b1111_0000,
 }
 
-pub fn packet_type_check(b: u8) -> PacketType {
-    match b {
-        0b0001_0000 => PacketType::CONNECT,
-        0b0010_0000 => PacketType::CONNACK,
-        0b0011_0000 => PacketType::PUBLISH,
-        0b0100_0000 => PacketType::PUBACK,
-        0b0101_0000 => PacketType::PUBREC,
-        0b0110_0010 => PacketType::PUBREL,
-        0b0111_0000 => PacketType::PUBCOMP,
-        0b1000_0010 => PacketType::SUBSCRIBE,
-        0b1001_0000 => PacketType::SUBACK,
-        0b1010_0010 => PacketType::UNSUBSCRIBE,
-        0b1011_0000 => PacketType::UNSUBACK,
-        0b1100_0000 => PacketType::PINGREQ,
-        0b1101_0000 => PacketType::PINGRESP,
-        0b1110_0000 => PacketType::DISCONNECT,
-        0b1111_0000 => PacketType::AUTH,
-        _ => todo!(),
-    }
+#[derive(Debug, Clone)]
+pub struct ConnectPacket {
+    // Variable Header
+    pub protocol_name: String,
+    pub protocol_version: ProtocolVersion,
+    pub clean_start: bool,
+    pub keep_alive: u16,
+
+    // Properties
+    // pub session_expiry_interval: Option<SessionExpiryInterval>,
+    // pub receive_maximum: Option<ReceiveMaximum>,
+    // pub maximum_packet_size: Option<MaximumPacketSize>,
+    // pub topic_alias_maximum: Option<TopicAliasMaximum>,
+    // pub request_response_information: Option<RequestResponseInformation>,
+    // pub request_problem_information: Option<RequestProblemInformation>,
+    // pub user_properties: Vec<UserProperty>,
+    // pub authentication_method: Option<AuthenticationMethod>,
+    // pub authentication_data: Option<AuthenticationData>,
+
+    // Payload
+    pub client_id: String,
+    // pub will: Option<FinalWill>,
+    pub user_name: Option<String>,
+    pub password: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum ProtocolVersion {
+    MQTT3,
+    MQTT4,
+    MQTT5,
+    // MQISDP,
 }

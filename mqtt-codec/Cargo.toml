@@ -1,10 +1,11 @@
 [package]
-name = "tower_raft"
+name = "mqtt_codec"
 version = "0.1.0"
 edition = "2021"
 
+
 [lib]
-name = "tower_raft"
+name = "mqtt_codec"
 path = "src/lib.rs"    # 对象的源文件路径
 test = true            # 能否被测试，默认是 true
 doctest = true         # 文档测试是否开启，默认是 true
@@ -16,16 +17,9 @@ edition = "2021"       # 对象使用的 Rust Edition
 crate-type = ["rlib","cdylib","staticlib"]   # 生成的包类型
 required-features = [] # 构建对象所需的 Cargo Features (N/A for lib).
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 [dependencies]
-async-trait = "0.1.68"
-prost = "0.11"
-raft = { git = "https://github.com/tikv/raft-rs.git", branch = "master" }
-serde = { workspace = true, features = ["derive"] }
-serde_yaml = { workspace = true}
-tokio = { workspace = true, features = ["full"] }
-tracing = {workspace = true}
-tonic = "0.9"
-
-
-[build-dependencies]
-tonic-build = "0.9"
+bytes = { workspace=true, features = ["serde"] }
+tokio-util = {workspace = true, features = ["codec"]}
+tracing = { workspace = true }

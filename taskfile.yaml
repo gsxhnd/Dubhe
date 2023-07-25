@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+tasks:
+  release:
+    cmds:
+      - cargo build --release --target x86_64-unknown-linux-musl
+  unlock:
+    cmds:
+      - rm ~/.cargo/.package-cache
+  clean:
+    cmds:
+      - cargo clean

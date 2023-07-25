@@ -1,7 +1,4 @@
-use crate::types::{DecodeError, EncodeError};
-use crate::v5::decoder;
-use bytes::{Bytes, BytesMut};
-use tokio_util::codec::{Decoder, Encoder};
+use bytes::Bytes;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Packet {
@@ -21,7 +18,7 @@ pub enum Packet {
     // Disconnect(Disconnect, Option<DisconnectProperties>),
 }
 
-/// Acknowledgement to QoS1 publish
+// Acknowledgement to QoS1 publish
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PubAck {
     pub pkid: u16,
@@ -190,46 +187,4 @@ pub struct ConnectPacket {
     // pub will: Option<FinalWill>,
     pub user_name: Option<String>,
     pub password: Option<String>,
-}
-
-pub struct MqttCodec {}
-
-impl MqttCodec {
-    pub fn new() -> Self {
-        MqttCodec {}
-    }
-    pub fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Packet>, DecodeError> {
-        // TODO - Ideally we should keep a state machine to store the data we've read so far.
-        let _packet = decoder::decode_mqtt(buf);
-
-        // if let Ok(Some(Packet::Connect(packet))) = &packet {
-        //     self.version = packet.protocol_version;
-        // }
-
-        // packet
-        todo!()
-    }
-
-    pub fn encode(&mut self, _packet: Packet, _bytes: &mut BytesMut) -> Result<(), EncodeError> {
-        // encoder::encode_mqtt(&packet, bytes, self.version);
-        Ok(())
-    }
-}
-
-impl Decoder for MqttCodec {
-    type Error = DecodeError;
-    type Item = Packet;
-
-    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-        // TODO - Ideally we should keep a state machine to store the data we've read so far.
-        self.decode(buf)
-    }
-}
-
-impl Encoder<Packet> for MqttCodec {
-    type Error = EncodeError;
-
-    fn encode(&mut self, packet: Packet, bytes: &mut BytesMut) -> Result<(), Self::Error> {
-        self.encode(packet, bytes)
-    }
 }

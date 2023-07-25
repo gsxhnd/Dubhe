@@ -1,14 +1,19 @@
 [workspace]
-members = ["tower-mqtt","tower-raft","tower"]
-
+members = [
+    "mqtt-codec",
+    "tower-mqtt",
+    "tower-raft",
+    "tower"
+    ]
 
 [workspace.package]
 name = "ThingsTower"
 version = "0.1.0"
 edition = "2021"
-authors = [""]
+authors = ["gsxhnd"]
+homepage = ""
 description = "MQTT Server for v3.1, v3.1.1 and v5.0 protocols"
-repository = "https://github.com/gsxhnd/Tower"
+repository = "https://github.com/gsxhnd/ThingsTower"
 license = "MIT license"
 categories = ["network"]
 keywords = ["MQTT", "IoT", "messaging", "MQTT Server", "MQTT Broker"]
@@ -17,16 +22,22 @@ rust-version = "1.68"
 
 
 [path]
-tower_mqtt = {path ="tower-mqtt"}
-tower_raft = {path ="tower-raft"}
+mqtt_code_types = { path = "mqtt-codec" }
+tower_mqtt = { path ="tower-mqtt" }
+tower_raft = { path ="tower-raft" }
+
 
 [workspace.dependencies]
+axum = { version = "0.6" }
 bytes = { version = "1.4", features = ["serde"] }
+clap = { version = "4.3", features = ["derive","env"] }
 futures = { version = "0.3" }
 futures-util = { version = "0.3" }
-serde = { version = "1.0.162", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
 tokio = { version = "1.28", features = ["full"] }
 tokio-util = {version = "0.7", features = ["codec"]}
+tokio-stream = "0.1.14"
 tokio-tungstenite = { version= "0.19" }
 tracing = {version = "0.1"}
 tracing-subscriber = "0.3"

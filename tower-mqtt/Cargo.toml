@@ -3,7 +3,6 @@ name = "tower_mqtt"
 version = "0.1.0"
 edition = "2021"
 
-
 [lib]
 name = "tower_mqtt"
 path = "src/lib.rs"    # 对象的源文件路径
@@ -17,13 +16,17 @@ edition = "2021"       # 对象使用的 Rust Edition
 crate-type = ["rlib","cdylib","staticlib"]   # 生成的包类型
 required-features = [] # 构建对象所需的 Cargo Features (N/A for lib).
 
-
 [dependencies]
+mqtt_codec = { path = "../mqtt-codec" }
+
 bytes = { workspace = true, features = ["serde"] }
 futures = { workspace = true }
 futures-util = { workspace = true }
-serde = { version = "1.0.162", features = ["derive"] }
-tracing = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_yaml = { workspace = true}
 tokio = { workspace = true, features = ["full"] }
 tokio-util = {workspace = true, features = ["codec"]}
 tokio-tungstenite = { workspace= true }
+tokio-stream = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

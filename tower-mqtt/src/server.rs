@@ -1,86 +1,123 @@
-use futures_util::{SinkExt, StreamExt};
+// use futures::{Sink, Stream};
+// use futures_util::{SinkExt, StreamExt};
+use futures_util::StreamExt;
+use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use std::{net::Ipv4Addr, thread};
 use tokio::net::TcpListener;
 use tokio_tungstenite;
 use tokio_util::codec::Framed;
 use tracing::info;
 
-use crate::v5::codec::{self, Packet};
-use crate::version::ProtocolVersion;
+use mqtt_codec::types::ProtocolVersion;
+use mqtt_codec::v3::codec as MqttCodecV3;
+use mqtt_codec::v5::codec as MqttCodecV5;
+
+use crate::config::MqttConfig;
+use crate::service;
+use crate::version::VersionCodec;
 
 #[derive(Debug, Clone)]
-pub enum BrokerMessage {
-    _Test(String),
-    // NewClient(Box<ConnectPacket>, Sender<ClientMessage>),
-    // Publish(String, Box<PublishPacket>),
-    // PublishAck(String, PublishAckPacket), // TODO - This can be handled by the client task
-    // PublishRelease(String, PublishReleasePacket), // TODO - This can be handled by the client task
-    // PublishReceived(String, PublishReceivedPacket),
-    // PublishComplete(String, PublishCompletePacket),
-    // PublishFinalWill(String, FinalWill),
-    // Subscribe(String, SubscribePacket), // TODO - replace string client_id with int
-    // Unsubscribe(String, UnsubscribePacket), // TODO - replace string client_id with int
-    // Disconnect(String, WillDisconnectLogic),
-}
-#[derive(Debug, Clone)]
-pub struct MqttServer<V3, V5> {
-    v3: V3,
-    v5: V5,
+pub struct MqttServer {
+    // v3: V3,
+    // v5: V5,
+    config: MqttConfig,
     a: Arc<Mutex<i32>>,
     // receiver: Receiver<BrokerMessage>,
     // sender: Sender<BrokerMessage>,
 }
 
-impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
-    pub fn new() -> Self {
+impl MqttServer {
+    pub fn new(cfg: MqttConfig) -> Self {
         // let (sender, receiver) = mpsc::channel(100);
         MqttServer {
-            v3: DefaultProtocolServer::new(ProtocolVersion::MQTT3),
-            v5: DefaultProtocolServer::new(ProtocolVersion::MQTT5),
+            // v3: DefaultProtocolServer::new(ProtocolVersion::MQTT3),
+            // v5: DefaultProtocolServer::new(ProtocolVersion::MQTT5),
+            config: cfg,
             a: Arc::new(Mutex::new(0)),
             // receiver,
             // sender,
         }
     }
+
     pub async fn run(self) {
         info!("mqtt server running");
-        info!("mqtt tcp service started in: ");
         tokio::spawn(self.clone().listen_tcp());
-        info!("mqtt tls service started in: ");
         tokio::spawn(self.clone().listen_tls());
-        info!("mqtt ws service started in: ");
         tokio::spawn(self.clone().listen_ws());
-        info!("mqtt wss service started in: ");
         tokio::spawn(self.clone().listen_wss());
     }
 
     pub async fn listen_tcp(self) {
-        let tcp_listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 1883))
-            .await
-            .expect("msg");
+        let addr: SocketAddr = self
+            .config
+            .listener
+            .tcp
+            .addr
+            .parse()
+            .expect("address is not valid");
 
+        let tcp_listener = TcpListener::bind(addr).await.expect("msg");
+        info!(
+            "mqtt tcp service started in: {}",
+            self.config.listener.tcp.addr
+        );
         loop {
             let (stream, addr) = tcp_listener.accept().await.unwrap();
-            info!("New connection: {}", addr);
-            let (_packet_sink, mut packet_stream) =
-                Framed::new(stream, codec::MqttCodec::new()).split();
-
-            let first_packet = packet_stream.next().await;
-            match first_packet {
-                Some(Ok(Packet::Connect(connect_packet))) => {
-                    println!("get connect packet {:?}", connect_packet);
+            let mut framed = Framed::new(stream, VersionCodec);
+            // let (mut packet_sink, mut packet_stream) = framed.split();
+            // let connect_packet: crate::version::ConnectPacket = match packet_stream.next().await {
+            let connect_packet: crate::version::ConnectPacket = match framed.next().await {
+                Some(Ok(connect)) => connect,
+                Some(Err(e)) => {
+                    println!("{:?}", e);
+                    // ProtocolVersion::MQTT5
+                    todo!()
                 }
-                Some(Ok(Packet::ConnAck(_, _))) => todo!(),
-                Some(Err(_)) => return,
-                None => return,
-            }
+                None => {
+                    todo!()
+                }
+            };
+
+            info!(
+                "tcp new connection established, mqtt version: {:?}, addr: {}",
+                connect_packet.protocol_version,
+                addr.to_string()
+            );
+
+            match connect_packet.protocol_version {
+                ProtocolVersion::MQTT3 => {
+                    let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
+                    let (packet_sink, packet_stream) = f.split();
+                    tokio::spawn(async move {
+                        service::process_v3(packet_stream, packet_sink).await;
+                    });
+                }
+                ProtocolVersion::MQTT5 => {
+                    let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
+                    let (_packet_sink, _packet_stream) = framed.split();
+                    // service::process_v5(packet_stream, packet_sink);
+                }
+                _ => {
+                    todo!()
+                }
+            };
         }
     }
+
     pub async fn listen_tls(self) {
-        let tls_listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 1884))
-            .await
-            .expect("msg");
+        let addr: SocketAddr = self
+            .config
+            .listener
+            .tls
+            .addr
+            .parse()
+            .expect("address is not valid");
+
+        let tls_listener = TcpListener::bind(addr).await.expect("msg");
+        info!(
+            "mqtt tls service started in: {}",
+            self.config.listener.tls.addr
+        );
         loop {
             let (_stream, addr) = tls_listener.accept().await.unwrap();
             info!("New connection: {} {:?}", addr, self.a);
@@ -88,10 +125,21 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
             *a += 1;
         }
     }
+
     pub async fn listen_ws(self) {
-        let ws_listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 1885))
-            .await
-            .unwrap();
+        let addr: SocketAddr = self
+            .config
+            .listener
+            .ws
+            .addr
+            .parse()
+            .expect("address is not valid");
+
+        let ws_listener = TcpListener::bind(addr).await.expect("msg");
+        info!(
+            "mqtt ws service started in: {}",
+            self.config.listener.ws.addr
+        );
 
         while let Ok((stream, _)) = ws_listener.accept().await {
             tokio::spawn(async {
@@ -109,10 +157,22 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
             });
         }
     }
+
     pub async fn listen_wss(self) {
-        let wss_listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 1886))
-            .await
-            .unwrap();
+        let addr: SocketAddr = self
+            .config
+            .listener
+            .wss
+            .addr
+            .parse()
+            .expect("address is not valid");
+
+        let wss_listener = TcpListener::bind(addr).await.expect("msg");
+
+        info!(
+            "mqtt wss service started in: {}",
+            self.config.listener.wss.addr
+        );
         while let Ok((stream, _)) = wss_listener.accept().await {
             tokio::spawn(async {
                 let ws_stream = tokio_tungstenite::accept_async(stream).await.expect("msg");
@@ -122,27 +182,10 @@ impl MqttServer<DefaultProtocolServer, DefaultProtocolServer> {
 
                 while let Some(message) = read.next().await {
                     let message = message.unwrap();
-                    info!(
-                        "Received a message from {}: {} thread {:?} {:?}",
-                        client_addr,
-                        message,
-                        thread::current().id(),
-                        thread::current().name()
-                    );
+                    info!("Received a message from {}: {}", client_addr, message,);
                     // write.send(message).await.unwrap();
                 }
             });
         }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct DefaultProtocolServer {
-    ver: ProtocolVersion,
-}
-
-impl DefaultProtocolServer {
-    fn new(ver: ProtocolVersion) -> Self {
-        Self { ver }
     }
 }
