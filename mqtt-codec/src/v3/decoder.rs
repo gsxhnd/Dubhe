@@ -3,7 +3,6 @@ use crate::v3::packet::*;
 
 use bytes::BytesMut;
 
-
 pub fn decode_mqtt(bytes: &mut BytesMut) -> Result<Option<Packet>, DecodeError> {
     if bytes.is_empty() {
         return Ok(None);
@@ -29,10 +28,31 @@ pub fn decode_mqtt(bytes: &mut BytesMut) -> Result<Option<Packet>, DecodeError> 
     Ok(Some(p))
 }
 
-pub struct Header {}
+// #[derive(Debug, Clone, PartialEq)]
+pub struct Header {
+    // pub typ: PacketType,
+    // pub dup: bool,
+    // pub qos: QoS,
+    // pub retain: bool,
+}
+
 impl Header {
-    pub fn new(buf: u8) ->  Result<Header, DecodeError> {
+    pub fn new(_hd: u8) -> Result<Header, DecodeError> {
         todo!()
+        // println!("[header new] hd: {}", hd);
+        // let (typ, flags_ok) = match hd >> 4 {
+        //     1 => (PacketType::CONNECT, hd & 0b1111 == 0),
+        //     _ => (PacketType::CONNECT, false),
+        // };
+        // if !flags_ok {
+        //     return Err(DecodeError::InvalidPacketType);
+        // }
+        // Ok(Header {
+        //     typ,
+        //     dup: hd & 0b1000 != 0,
+        //     qos: QoS::from_u8((hd & 0b110) >> 1)?,
+        //     retain: hd & 1 == 1,
+        // })
     }
 }
 
@@ -88,4 +108,28 @@ pub fn read_header(
 //         return Err(DecodeError::InvalidPacketType);
 //     }
 //     Ok(ConnectPacket::from_buffer(buf, offset))
+// }
+
+// #[test]
+// fn version_read_header_test() {
+//     let mut b = connect_codec();
+//     let mut offset = 0;
+
+//     let (header, _reaming_size) = read_header(&mut b, &mut offset)
+//         .unwrap()
+//         .expect("read header error");
+
+//     println!("header type: {:?}", header.typ)
+// }
+
+// #[test]
+// fn version_read_packet() {
+//     let mut buf = connect_codec();
+//     let mut offset = 0;
+
+//     let (header, reaming_size) = read_header(&mut buf, &mut offset)
+//         .unwrap()
+//         .expect("read header error");
+
+//     let _ = read_packet(header, reaming_size, &mut buf, &mut offset);
 // }
