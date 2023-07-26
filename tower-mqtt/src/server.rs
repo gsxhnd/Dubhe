@@ -66,7 +66,7 @@ impl MqttServer {
             let mut framed = Framed::new(stream, VersionCodec);
             // let (mut packet_sink, mut packet_stream) = framed.split();
             // let connect_packet: crate::version::ConnectPacket = match packet_stream.next().await {
-            let connect_packet: crate::version::ConnectPacket = match framed.next().await {
+            let version = match framed.next().await {
                 Some(Ok(connect)) => connect,
                 Some(Err(e)) => {
                     println!("{:?}", e);
@@ -80,11 +80,11 @@ impl MqttServer {
 
             info!(
                 "tcp new connection established, mqtt version: {:?}, addr: {}",
-                connect_packet.protocol_version,
+                version,
                 addr.to_string()
             );
 
-            match connect_packet.protocol_version {
+            match version {
                 ProtocolVersion::MQTT3 => {
                     let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
                     let (packet_sink, packet_stream) = f.split();

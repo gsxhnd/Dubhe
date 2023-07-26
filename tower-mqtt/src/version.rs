@@ -1,180 +1,117 @@
-use bytes::{BytesMut, Buf};
-// use bytes::{BufMut, BytesMut};
+use bytes::BytesMut;
 use tokio_util::codec::Decoder;
 
-use mqtt_codec::types::{DecodeError, PacketType, ProtocolVersion, QoS};
+use mqtt_codec::types::{DecodeError, ProtocolVersion};
 
 pub struct VersionCodec;
 
 impl Decoder for VersionCodec {
-    type Item = ConnectPacket;
+    type Item = ProtocolVersion;
     type Error = DecodeError;
 
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-        println!("version codec decode buf: {:?}", buf);
-        read_version(buf);
-        let mut offset = 0;
-        if let Some((header, remaining_len)) = read_header(buf, &mut offset)? {
-            println!("connect header type: {:?}", header.typ);
-            let r: ConnectPacket = read_packet(header, remaining_len, buf, &mut offset)?;
-            Ok(Some(r))
-        } else {
-            Ok(None)
-        }
+        read_version(buf)
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct ConnectPacket {
-    // Variable Header
-    pub protocol_name: String,
-    pub protocol_version: ProtocolVersion,
-    pub keep_alive: u16,
+// #[derive(Debug, Clone, PartialEq)]
+// pub struct Header {
+//     pub typ: PacketType,
+//     pub dup: bool,
+//     pub qos: QoS,
+//     pub retain: bool,
+// }
 
-    pub user_name_flag: bool,
-    pub password_flag: bool,
-    pub will_retain: bool,
-    pub will_qos: bool,
-    pub will_flag: bool,
-    pub clean_start: bool,
+// impl Header {
+//     pub fn new(hd: u8) -> Result<Header, DecodeError> {
+//         println!("[header new] hd: {}", hd);
+//         let (typ, flags_ok) = match hd >> 4 {
+//             1 => (PacketType::CONNECT, hd & 0b1111 == 0),
+//             _ => (PacketType::CONNECT, false),
+//         };
+//         if !flags_ok {
+//             return Err(DecodeError::InvalidPacketType);
+//         }
+//         Ok(Header {
+//             typ,
+//             dup: hd & 0b1000 != 0,
+//             qos: QoS::from_u8((hd & 0b110) >> 1)?,
+//             retain: hd & 1 == 1,
+//         })
+//     }
+// }
 
-    // Properties
-    // pub session_expiry_interval: Option<SessionExpiryInterval>,
-    // pub receive_maximum: Option<ReceiveMaximum>,
-    // pub maximum_packet_size: Option<MaximumPacketSize>,
-    // pub topic_alias_maximum: Option<TopicAliasMaximum>,
-    // pub request_response_information: Option<RequestResponseInformation>,
-    // pub request_problem_information: Option<RequestProblemInformation>,
-    // pub user_properties: Vec<UserProperty>,
-    // pub authentication_method: Option<AuthenticationMethod>,
-    // pub authentication_data: Option<AuthenticationData>,
+// pub fn read_header(
+//     buf: &mut bytes::BytesMut,
+//     offset: &mut usize,
+// ) -> Result<Option<(Header, usize)>, DecodeError> {
+//     let mut len: usize = 0;
+//     for pos in 0..=3 {
+//         println!("[read_header] offset: {}", *offset);
+//         println!("[read_header] pos: {}", pos);
+//         println!("[read_header] buf len: {}", buf.len());
+//         println!("[read_header] full buf: {:?}", buf);
 
-    // Payload
-    pub client_id: String,
-    // pub will: Option<FinalWill>,
-    pub user_name: Option<String>,
-    pub password: Option<String>,
-}
-impl ConnectPacket {
-    fn from_buffer(_buf: &mut bytes::BytesMut, _offset: &mut usize) -> Self {
-        ConnectPacket {
-            protocol_name: "".to_string(),
-            protocol_version: ProtocolVersion::MQTT3,
-            keep_alive: 0b1000_00000000,
-            user_name_flag: false,
-            password_flag: false,
-            will_retain: true,
-            will_qos: true,
-            will_flag: true,
-            clean_start: true,
-            client_id: "".to_string(),
-            user_name: None,
-            password: None,
-        }
-    }
-}
+//         if buf.len() > *offset + pos + 1 {
+//             let byte = buf[*offset + pos + 1];
+//             println!("[read_header] byte: {}", byte);
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Header {
-    pub typ: PacketType,
-    pub dup: bool,
-    pub qos: QoS,
-    pub retain: bool,
-}
+//             len += (byte as usize & 0x7F) << (pos * 7);
+//             println!("[read_header] len: {}", len);
 
-impl Header {
-    pub fn new(hd: u8) -> Result<Header, DecodeError> {
-        println!("[header new] hd: {}", hd);
-        let (typ, flags_ok) = match hd >> 4 {
-            1 => (PacketType::CONNECT, hd & 0b1111 == 0),
-            _ => (PacketType::CONNECT, false),
+//             if (byte & 0x80) == 0 {
+//                 // Continuation bit == 0, length is parsed
+//                 if buf.len() < *offset + 2 + pos + len {
+//                     // Won't be able to read full packet
+//                     return Ok(None);
+//                 }
+//                 println!("[read_header] header offset: {}", *offset);
+//                 println!("[read_header] header buf: {:?}", buf);
+//                 println!("[read_header] header buf offset 0: {:?}", buf[0]);
+//                 println!("[read_header] header buf offset 1: {:?}", buf[1]);
+//                 // Parse header byte, skip past the header, and return
+//                 let header = Header::new(buf[*offset])?;
+//                 *offset += pos + 2;
+//                 return Ok(Some((header, len)));
+//             }
+//         } else {
+//             // Couldn't read full length
+//             return Ok(None);
+//         }
+//     }
+//     // Continuation byte == 1 four times, that's illegal.
+//     Err(DecodeError::InvalidPacketType)
+// }
+
+fn read_version(buf: &mut bytes::BytesMut) -> Result<Option<ProtocolVersion>, DecodeError> {
+    if &mut buf[4..8] == b"MQTT" {
+        let _ = match buf.get(8) {
+            Some(4) => Ok(ProtocolVersion::MQTT4),
+            Some(5) => Ok(ProtocolVersion::MQTT5),
+            Some(_) => Err(DecodeError::InvalidPacketType),
+            None => Err(DecodeError::InvalidPacketType),
         };
-        if !flags_ok {
-            return Err(DecodeError::InvalidPacketType);
-        }
-        Ok(Header {
-            typ,
-            dup: hd & 0b1000 != 0,
-            qos: QoS::from_u8((hd & 0b110) >> 1)?,
-            retain: hd & 1 == 1,
-        })
+    } else if &mut buf[4..10] == b"MQIsdp" {
+        let _ = match buf.get(10) {
+            Some(3) => Ok(ProtocolVersion::MQTT3),
+            Some(_) => Err(DecodeError::InvalidPacketType),
+            None => Err(DecodeError::InvalidPacketType),
+        };
     }
-}
-
-pub fn read_header(
-    buf: &mut bytes::BytesMut,
-    offset: &mut usize,
-) -> Result<Option<(Header, usize)>, DecodeError> {
-    let mut len: usize = 0;
-    for pos in 0..=3 {
-        println!("[read_header] offset: {}", *offset);
-        println!("[read_header] pos: {}", pos);
-        println!("[read_header] buf len: {}", buf.len());
-        println!("[read_header] full buf: {:?}", buf);
-
-        if buf.len() > *offset + pos + 1 {
-            let byte = buf[*offset + pos + 1];
-            println!("[read_header] byte: {}", byte);
-
-            len += (byte as usize & 0x7F) << (pos * 7);
-            println!("[read_header] len: {}", len);
-
-            if (byte & 0x80) == 0 {
-                // Continuation bit == 0, length is parsed
-                if buf.len() < *offset + 2 + pos + len {
-                    // Won't be able to read full packet
-                    return Ok(None);
-                }
-                println!("[read_header] header offset: {}", *offset);
-                println!("[read_header] header buf: {:?}", buf);
-                println!("[read_header] header buf offset 0: {:?}", buf[0]);
-                println!("[read_header] header buf offset 1: {:?}", buf[1]);
-                // Parse header byte, skip past the header, and return
-                let header = Header::new(buf[*offset])?;
-                *offset += pos + 2;
-                return Ok(Some((header, len)));
-            }
-        } else {
-            // Couldn't read full length
-            return Ok(None);
-        }
-    }
-    // Continuation byte == 1 four times, that's illegal.
     Err(DecodeError::InvalidPacketType)
 }
 
-// TODO: v3 check is error, v4 v5 is ok
-fn read_version(buf: &mut bytes::BytesMut) {
-    if &mut buf[4..8] == b"MQTT" {
-        println!("prot name mqtt")
-    }
-    println!("prot version mqtt: {:?}",buf.get(8));
-    match buf.get(8) {
-        Some(3) => {
-            println!("version v3")
-        },
-        Some(4) => {
-            println!("version v4")
-        },
-        Some(5) => {
-            println!("version v5")
-        },
-        Some(_) => {},
-        None => println!("")
-    };
-}
-
-pub fn read_packet(
-    header: Header,
-    _remaining_size: usize,
-    buf: &mut bytes::BytesMut,
-    offset: &mut usize,
-) -> Result<ConnectPacket, DecodeError> {
-    if header.typ != PacketType::CONNECT {
-        return Err(DecodeError::InvalidPacketType);
-    }
-    Ok(ConnectPacket::from_buffer(buf, offset))
-}
+// pub fn read_packet(
+//     header: Header,
+//     _remaining_size: usize,
+//     buf: &mut bytes::BytesMut,
+//     offset: &mut usize,
+// ) -> Result<ConnectPacket, DecodeError> {
+//     if header.typ != PacketType::CONNECT {
+//         return Err(DecodeError::InvalidPacketType);
+//     }
+//     Ok(ConnectPacket::from_buffer(buf, offset))
+// }
 
 #[cfg(test)]
 pub fn connect_codec() -> BytesMut {
@@ -208,29 +145,29 @@ pub fn connect_codec() -> BytesMut {
     return bytes;
 }
 
-#[test]
-fn version_read_header_test() {
-    let mut b = connect_codec();
-    let mut offset = 0;
+// #[test]
+// fn version_read_header_test() {
+//     let mut b = connect_codec();
+//     let mut offset = 0;
 
-    let (header, _reaming_size) = read_header(&mut b, &mut offset)
-        .unwrap()
-        .expect("read header error");
+//     let (header, _reaming_size) = read_header(&mut b, &mut offset)
+//         .unwrap()
+//         .expect("read header error");
 
-    println!("header type: {:?}", header.typ)
-}
+//     println!("header type: {:?}", header.typ)
+// }
 
-#[test]
-fn version_read_packet() {
-    let mut buf = connect_codec();
-    let mut offset = 0;
+// #[test]
+// fn version_read_packet() {
+//     let mut buf = connect_codec();
+//     let mut offset = 0;
 
-    let (header, reaming_size) = read_header(&mut buf, &mut offset)
-        .unwrap()
-        .expect("read header error");
+//     let (header, reaming_size) = read_header(&mut buf, &mut offset)
+//         .unwrap()
+//         .expect("read header error");
 
-    let _ = read_packet(header, reaming_size, &mut buf, &mut offset);
-}
+//     let _ = read_packet(header, reaming_size, &mut buf, &mut offset);
+// }
 
 #[test]
 fn version_read_version() {
