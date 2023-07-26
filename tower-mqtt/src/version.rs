@@ -1,4 +1,4 @@
-use bytes::BytesMut;
+use bytes::{BytesMut, Buf};
 // use bytes::{BufMut, BytesMut};
 use tokio_util::codec::Decoder;
 
@@ -12,6 +12,7 @@ impl Decoder for VersionCodec {
 
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         println!("version codec decode buf: {:?}", buf);
+        read_version(buf);
         let mut offset = 0;
         if let Some((header, remaining_len)) = read_header(buf, &mut offset)? {
             println!("connect header type: {:?}", header.typ);
@@ -142,6 +143,27 @@ pub fn read_header(
     Err(DecodeError::InvalidPacketType)
 }
 
+// TODO: v3 check is error, v4 v5 is ok
+fn read_version(buf: &mut bytes::BytesMut) {
+    if &mut buf[4..8] == b"MQTT" {
+        println!("prot name mqtt")
+    }
+    println!("prot version mqtt: {:?}",buf.get(8));
+    match buf.get(8) {
+        Some(3) => {
+            println!("version v3")
+        },
+        Some(4) => {
+            println!("version v4")
+        },
+        Some(5) => {
+            println!("version v5")
+        },
+        Some(_) => {},
+        None => println!("")
+    };
+}
+
 pub fn read_packet(
     header: Header,
     _remaining_size: usize,
@@ -164,7 +186,8 @@ pub fn connect_codec() -> BytesMut {
     ];
     // Variable header
     let mut mut_header: Vec<u8> = vec![
-        0b00000100, // 协议名长度为 4 字节
+        0b00000100, // 协议名长度为 4 字节 MSB
+        0b00000100, // 协议名长度为 4 字节 LSB
         0x4D, 0x51, 0x54, 0x54,       // 协议名为 MQTT
         0b00000100, //  协议级别为 4
         0b11000010, //连接标志，表示清理会话、使用密码
@@ -207,4 +230,13 @@ fn version_read_packet() {
         .expect("read header error");
 
     let _ = read_packet(header, reaming_size, &mut buf, &mut offset);
+}
+
+#[test]
+fn version_read_version() {
+    let mut buf = connect_codec();
+    let source_buf = buf.clone();
+    read_version(&mut buf);
+    assert_eq!(source_buf, buf);
+    // assert_ne!(source_buf, buf);
 }
