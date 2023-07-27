@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use tokio::net::TcpListener;
 use tokio_tungstenite;
 use tokio_util::codec::Framed;
-use tracing::info;
+use tracing::{error, info};
 
 use mqtt_codec::types::ProtocolVersion;
 use mqtt_codec::v3::codec as MqttCodecV3;
@@ -67,11 +67,10 @@ impl MqttServer {
             // let (mut packet_sink, mut packet_stream) = framed.split();
             // let connect_packet: crate::version::ConnectPacket = match packet_stream.next().await {
             let version = match framed.next().await {
-                Some(Ok(connect)) => connect,
+                Some(Ok(v)) => v,
                 Some(Err(e)) => {
-                    println!("{:?}", e);
-                    // ProtocolVersion::MQTT5
-                    todo!()
+                    error!("version codec error: {:?}", e);
+                    continue;
                 }
                 None => {
                     todo!()
@@ -92,13 +91,17 @@ impl MqttServer {
                         service::process_v3(packet_stream, packet_sink).await;
                     });
                 }
+                ProtocolVersion::MQTT4 => {
+                    let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
+                    let (packet_sink, packet_stream) = f.split();
+                    tokio::spawn(async move {
+                        service::process_v3(packet_stream, packet_sink).await;
+                    });
+                }
                 ProtocolVersion::MQTT5 => {
                     let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
                     let (_packet_sink, _packet_stream) = framed.split();
                     // service::process_v5(packet_stream, packet_sink);
-                }
-                _ => {
-                    todo!()
                 }
             };
         }

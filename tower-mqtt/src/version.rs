@@ -1,7 +1,7 @@
 use bytes::BytesMut;
 use tokio_util::codec::Decoder;
 
-use mqtt_codec::types::{DecodeError, ProtocolVersion};
+use mqtt_codec::types::{DecodeError, ProtocolVersion, MQISDP, MQTT};
 
 pub struct VersionCodec;
 
@@ -15,21 +15,21 @@ impl Decoder for VersionCodec {
 }
 
 fn read_version(buf: &mut bytes::BytesMut) -> Result<Option<ProtocolVersion>, DecodeError> {
-    if &mut buf[4..10] == b"MQIsdp" {
-        let _ = match buf.get(10) {
-            Some(3) => Ok(ProtocolVersion::MQTT3),
+    if &mut buf[4..10] == MQISDP {
+        return match buf.get(10) {
+            Some(3) => Ok(Some(ProtocolVersion::MQTT3)),
             Some(_) => Err(DecodeError::InvalidPacketType),
             None => Err(DecodeError::InvalidPacketType),
         };
-    } else if &mut buf[4..8] == b"MQTT" {
-        let _ = match buf.get(8) {
-            Some(4) => Ok(ProtocolVersion::MQTT4),
-            Some(5) => Ok(ProtocolVersion::MQTT5),
+    } else if &mut buf[4..8] == MQTT {
+        return match buf.get(8) {
+            Some(4) => Ok(Some(ProtocolVersion::MQTT4)),
+            Some(5) => Ok(Some(ProtocolVersion::MQTT5)),
             Some(_) => Err(DecodeError::InvalidPacketType),
             None => Err(DecodeError::InvalidPacketType),
         };
     }
-    Err(DecodeError::InvalidPacketType)
+    Err(DecodeError::BadTransport)
 }
 
 #[cfg(test)]
@@ -68,6 +68,14 @@ pub fn connect_codec() -> BytesMut {
 fn version_read_version() {
     let mut buf = connect_codec();
     let source_buf = buf.clone();
-    let _ = read_version(&mut buf);
+    let _ = match read_version(&mut buf) {
+        Ok(Some(v)) => {
+            println!("protocol version: {:?}", v);
+        }
+        Ok(None) => {}
+        Err(e) => {
+            println!("protocol version error: {:?}", e);
+        }
+    };
     assert_eq!(source_buf, buf);
 }
