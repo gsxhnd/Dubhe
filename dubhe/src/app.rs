@@ -1,8 +1,8 @@
 use futures::future;
 use tokio::runtime::Runtime;
 
-use tower_mqtt::MqttServer;
-use tower_raft::RaftServer;
+use dubhe_mqtt::MqttServer;
+use dubhe_raft::RaftServer;
 
 use crate::api::{ApiConfig, ApiServer};
 use crate::config::Config;
@@ -10,8 +10,8 @@ use crate::config::Config;
 #[derive(Debug)]
 pub struct App {
     runtime: Runtime,
-    raft_config: tower_raft::RaftConfig,
-    mqtt_config: tower_mqtt::MqttConfig,
+    raft_config: dubhe_raft::RaftConfig,
+    mqtt_config: dubhe_mqtt::MqttConfig,
     api_config: ApiConfig,
 }
 
