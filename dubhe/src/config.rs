@@ -1,6 +1,6 @@
+use dubhe_mqtt::MqttConfig;
+use dubhe_raft::RaftConfig;
 use serde::{Deserialize, Serialize};
-use tower_mqtt::MqttConfig;
-use tower_raft::RaftConfig;
 
 use crate::api::ApiConfig;
 
