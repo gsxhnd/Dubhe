@@ -1,5 +1,5 @@
 import axios from "axios";
-import { AxiosRequestConfig, AxiosResponse } from "axios";
+import { InternalAxiosRequestConfig, AxiosResponse } from "axios";
 
 const http = axios.create({
   baseURL: "",
@@ -10,7 +10,7 @@ const http = axios.create({
 });
 
 http.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig) => {
     console.log(config.baseURL);
     return config;
   },
