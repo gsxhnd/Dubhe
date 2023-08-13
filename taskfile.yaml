@@ -11,3 +11,4 @@ tasks:
   clean:
     cmds:
       - cargo clean
+      - rm -rf dubhe-web/dist
