@@ -8,7 +8,6 @@
       :menu-items="[{ name: '123', link: '', icon: '', tooltip: '' }]"
       :menu-logo="logo"
     />
-    <div class="layout-header"></div>
   </div>
 </template>
 
