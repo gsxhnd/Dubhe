@@ -3,7 +3,6 @@ use std::fs;
 use tracing::info;
 use tracing_subscriber;
 
-mod api;
 mod app;
 mod config;
 mod flag;

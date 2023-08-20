@@ -1,10 +1,10 @@
 use futures::future;
 use tokio::runtime::Runtime;
 
+use dubhe_api::{ApiConfig, ApiServer};
 use dubhe_mqtt::MqttServer;
 use dubhe_raft::RaftServer;
 
-use crate::api::{ApiConfig, ApiServer};
 use crate::config::Config;
 
 #[derive(Debug)]
@@ -38,18 +38,23 @@ impl AppBuilder {
 
 impl App {
     pub fn run(self) {
-        let raft_handle = self.runtime.spawn(async {
-            RaftServer::new(self.raft_config).run().await;
-        });
+        // let services: Vec<tokio::task::JoinHandle<()>> = vec![raft_handle, mq_handle, api_handle];
+        let mut services: Vec<tokio::task::JoinHandle<()>> = vec![];
 
-        let mq_handle = self.runtime.spawn(async {
+        if self.api_config.enable {
+            services.push(self.runtime.spawn(async {
+                ApiServer::new(self.api_config).run().await;
+            }));
+        }
+        if self.raft_config.enable {
+            services.push(self.runtime.spawn(async {
+                RaftServer::new(self.raft_config).run().await;
+            }));
+        }
+        services.push(self.runtime.spawn(async {
             MqttServer::new(self.mqtt_config).run().await;
-        });
+        }));
 
-        let api_handle = self.runtime.spawn(async {
-            ApiServer::new(self.api_config).run().await;
-        });
-        let services = vec![raft_handle, mq_handle, api_handle];
         self.runtime.block_on(async {
             future::join_all(services).await;
         });

@@ -1,15 +1,15 @@
 <template>
   <div class="sidebar" :class="isOpened ? 'open' : ''">
-    <div class="sidebar-logo">
+    <div class="logo">
       <template v-if="menuLogo">
-        <img />
+        <img src="@/assets/vue.svg" class="menu-logo icon" />
       </template>
       <template v-else>
         <i class="bx icon"></i>
       </template>
       <div class="logo-name">{{ menuTitle }}</div>
     </div>
-    <div class="sidebar-item">
+    <div class="item">
       <div id="my-scroll" style="margin: 6px 14px 0 14px">
         <ul class="nav-list" style="overflow: visible">
           <li
@@ -48,9 +48,6 @@ interface MenuItems {
 }
 
 defineProps({
-  // searchPlaceholder: { type: String },
-  // searchTooltip: { type: String },
-  // isSearch: { type: Boolean, default: false }
   menuLogo: { type: String, default: "" },
   menuTitle: { type: String, default: "Logo Name" },
   isOpened: { type: Boolean, default: true },
@@ -77,20 +74,34 @@ defineProps({
   top: 0;
   height: 100%;
   min-height: min-content;
-  /* overflow-y: auto; */
   width: 78px;
   background: @bg-color;
-  /* padding: 6px 14px 0 14px; */
   z-index: 99;
   transition: all 0.5s ease;
 
   &.open {
     width: 250px;
+    .logo {
+      &-name {
+        opacity: 1;
+        display: flex;
+      }
+    }
+    .item {
+      .tooltip {
+        display: none;
+      }
+    }
   }
-  &-logo {
+
+  .logo {
+    display: flex;
     margin: 6px 14px 0 14px;
+    &-name {
+      display: none;
+    }
   }
-  &-item {
+  .item {
     display: flex;
     flex-direction: column;
     justify-content: space-between;

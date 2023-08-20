@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RaftConfig {
+    pub enable: bool,
     pub listener_addr: String,
     #[serde(default)]
     pub worker: u8,

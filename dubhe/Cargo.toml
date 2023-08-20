@@ -12,6 +12,7 @@ bench = false
 
 
 [dependencies]
+dubhe_api = { path = "../dubhe-api" }
 dubhe_mqtt = { path = "../dubhe-mqtt" }
 dubhe_raft = { path = "../dubhe-raft" }
 

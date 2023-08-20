@@ -1,8 +1,7 @@
+use dubhe_api::ApiConfig;
 use dubhe_mqtt::MqttConfig;
 use dubhe_raft::RaftConfig;
 use serde::{Deserialize, Serialize};
-
-use crate::api::ApiConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {

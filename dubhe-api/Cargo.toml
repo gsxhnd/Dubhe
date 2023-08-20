@@ -1,8 +1,27 @@
 [package]
-name = "dubhe-api"
+name = "dubhe_api"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "dubhe_api"
+path = "src/lib.rs"                          # 对象的源文件路径
+test = true                                  # 能否被测试，默认是 true
+doctest = true                               # 文档测试是否开启，默认是 true
+bench = true                                 # 基准测试是否开启
+doc = true                                   # 文档功能是否开启
+proc-macro = false                           # 是否是过程宏类型的库
+harness = true                               # 是否使用libtest harness : https://doc.rust-lang.org/stable/rustc/tests/index.html
+edition = "2021"                             # 对象使用的 Rust Edition
+crate-type = ["rlib", "cdylib", "staticlib"] # 生成的包类型
+required-features = []                       # 构建对象所需的 Cargo Features (N/A for lib).
+
 [dependencies]
+axum = { workspace = true }
+mime_guess = "2.0"
+rust-embed = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_yaml = { workspace = true }
+tracing = { workspace = true }
