@@ -9,12 +9,15 @@ use rust_embed::RustEmbed;
 use std::net::SocketAddr;
 use tracing::info;
 
-use super::ApiConfig;
+use crate::config::ApiConfig;
+use crate::router;
+
 pub struct ApiServer {
     cfg: ApiConfig,
 }
 
 static INDEX_HTML: &str = "index.html";
+
 #[derive(RustEmbed)]
 #[folder = "../dubhe-web/dist/"]
 struct Assets;
@@ -24,14 +27,16 @@ impl ApiServer {
         ApiServer { cfg }
     }
     pub async fn run(&self) {
-        let app = Router::new()
-            .fallback(static_handler)
-            .route("/api/v1/hello", get(|| async { "Hello, World!" }));
         let addr: SocketAddr = self.cfg.listener_addr.parse().expect("msg");
-        info!(
-            "api service enable, listened in: {}",
-            self.cfg.listener_addr
-        );
+
+        let api_router = router::api_router();
+        let mut app = Router::new().nest("/api/v1/hello", api_router);
+        if self.cfg.web.enable {
+            app = app.fallback(static_handler);
+            info!("api service web enable, listened in: http://{}", addr);
+        }
+
+        info!("api service enable, listened in: http://{}/api/v1", addr);
         axum::Server::bind(&addr)
             .serve(app.into_make_service())
             .await

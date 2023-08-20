@@ -1,4 +1,5 @@
 mod config;
+mod router;
 mod server;
 
 pub use config::ApiConfig;

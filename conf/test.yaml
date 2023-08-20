@@ -27,14 +27,19 @@ mqtt:
   max_qos_allowed: 2
   shared_subscription: true
 
-api:
-  enable: true
-  listener_addr: "127.0.0.1:3001"
 
 peer:
+  enable: true
   listener_addr: "127.0.0.1:1881"
   worker: 0
   nodes:
     - "node1@127.0.0.1:8080"
     - "node2@127.0.0.1:8080"
     - "node3@127.0.0.1:8080"
+
+api:
+  enable: true
+  listener_addr: "127.0.0.1:3001"
+  web:
+    enable: true
+
