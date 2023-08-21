@@ -1,11 +1,17 @@
 <template>
-  <Header class="layout-header" />
-  <div class="layout-container">
+  <div class="layout">
     <Sidebar
+      class="layout-sidebar"
       :is-opened="layoutStore.sidebar.open"
       :menu-items="[{ name: '123', link: '', icon: '', tooltip: '' }]"
       :menu-logo="logo"
     />
+    <div class="layout-right">
+      <Header class="layout-header" />
+      <div class="layout-context">
+        <router-view></router-view>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -18,3 +24,18 @@ import { useLayoutStore } from "@/stores/layout";
 const layoutStore = useLayoutStore();
 const logo = ref("vite.svg");
 </script>
+
+<style lang="less" scoped>
+.layout {
+  display: flex;
+  height: 100vh;
+  // &-sidebar {
+  // }
+  &-right {
+    width: 100%;
+  }
+  &-context {
+    height: 100%;
+  }
+}
+</style>

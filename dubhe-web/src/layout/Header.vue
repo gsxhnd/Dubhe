@@ -1,5 +1,5 @@
 <template>
-  <div class="header">
+  <div class="layout-header">
     <Button
       icon="pi pi-arrow-right"
       @click="layoutStore.sidebarToggle"
@@ -14,4 +14,9 @@ import { useLayoutStore } from "@/stores/layout";
 const layoutStore = useLayoutStore();
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.layout-header {
+  height: 50px;
+  background: @layout-header-bg-color;
+}
+</style>

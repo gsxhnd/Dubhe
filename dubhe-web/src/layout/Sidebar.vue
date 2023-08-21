@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar" :class="isOpened ? 'open' : ''">
+  <div class="sidebar" :class="isOpened ? 'open' : 'close'">
     <div class="logo">
       <template v-if="menuLogo">
         <img src="@/assets/vue.svg" class="menu-logo icon" />
@@ -61,46 +61,24 @@ defineProps({
 </script>
 
 <style lang="less">
-@bg-color: #fbfbff;
-@icons-color: #fff;
-@items-tooltip-color: #e4e9f7;
-
 .sidebar {
-  position: relative;
   display: flex;
   flex-direction: column;
-  position: fixed;
+  // position: fixed;
   left: 0;
   top: 0;
-  height: 100%;
   min-height: min-content;
   width: 78px;
-  background: @bg-color;
+  background: @layout-sidebar-bg-color;
   z-index: 99;
   transition: all 0.5s ease;
-
-  &.open {
-    width: 250px;
-    .logo {
-      &-name {
-        opacity: 1;
-        display: flex;
-      }
-    }
-    .item {
-      .tooltip {
-        display: none;
-      }
-    }
-  }
 
   .logo {
     display: flex;
     margin: 6px 14px 0 14px;
-    &-name {
-      display: none;
-    }
+    justify-content: center;
   }
+
   .item {
     display: flex;
     flex-direction: column;
@@ -134,6 +112,30 @@ defineProps({
         &:hover {
           background: #fff;
         }
+      }
+    }
+  }
+
+  &.open {
+    width: 250px;
+    .logo {
+      &-name {
+        opacity: 1;
+        display: flex;
+        align-items: center;
+      }
+    }
+    .item {
+      .tooltip {
+        display: none;
+      }
+    }
+  }
+
+  &.close {
+    .logo {
+      &-name {
+        display: none;
       }
     }
   }
