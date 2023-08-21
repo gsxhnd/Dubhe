@@ -1,10 +1,8 @@
 <template>
-  <div class="layout-header">
-    <Button icon="pi pi-arrow-right" @click="open = !open" label="Submit" />
-  </div>
+  <Header class="layout-header" />
   <div class="layout-container">
     <Sidebar
-      :is-opened="open"
+      :is-opened="layoutStore.sidebar.open"
       :menu-items="[{ name: '123', link: '', icon: '', tooltip: '' }]"
       :menu-logo="logo"
     />
@@ -13,9 +11,10 @@
 
 <script setup lang="ts">
 import { h, defineComponent, ref, Component } from "vue";
-import Button from "primevue/button";
 import Sidebar from "./Sidebar.vue";
+import Header from "./Header.vue";
+import { useLayoutStore } from "@/stores/layout";
 
+const layoutStore = useLayoutStore();
 const logo = ref("vite.svg");
-const open = ref(true);
 </script>

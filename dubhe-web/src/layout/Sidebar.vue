@@ -49,7 +49,7 @@ interface MenuItems {
 
 defineProps({
   menuLogo: { type: String, default: "" },
-  menuTitle: { type: String, default: "Logo Name" },
+  menuTitle: { type: String, default: "Dubhe" },
   isOpened: { type: Boolean, default: true },
   isUsedVueRouter: { type: Boolean, default: false },
   menuItems: Array<MenuItems>,
@@ -61,7 +61,7 @@ defineProps({
 </script>
 
 <style lang="less">
-@bg-color: #11101d;
+@bg-color: #fbfbff;
 @icons-color: #fff;
 @items-tooltip-color: #e4e9f7;
 
