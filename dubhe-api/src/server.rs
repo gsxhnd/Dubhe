@@ -2,7 +2,6 @@ use axum::{
     self,
     http::{header, StatusCode, Uri},
     response::{Html, IntoResponse, Response},
-    routing::get,
     Router,
 };
 use rust_embed::RustEmbed;
