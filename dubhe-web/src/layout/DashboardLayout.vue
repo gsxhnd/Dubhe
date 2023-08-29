@@ -1,21 +1,41 @@
 <template>
-  <div class="layout-header">
-    <Button icon="pi pi-arrow-right" @click="open = !open" label="Submit" />
-  </div>
-  <div class="layout-container">
+  <div class="layout">
     <Sidebar
-      :is-opened="open"
+      class="layout-sidebar"
+      :is-opened="layoutStore.sidebar.open"
       :menu-items="[{ name: '123', link: '', icon: '', tooltip: '' }]"
       :menu-logo="logo"
     />
+    <div class="layout-right">
+      <Header class="layout-header" />
+      <div class="layout-context">
+        <router-view></router-view>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { h, defineComponent, ref, Component } from "vue";
-import Button from "primevue/button";
 import Sidebar from "./Sidebar.vue";
+import Header from "./Header.vue";
+import { useLayoutStore } from "@/stores/layout";
 
+const layoutStore = useLayoutStore();
 const logo = ref("vite.svg");
-const open = ref(true);
 </script>
+
+<style lang="less" scoped>
+.layout {
+  display: flex;
+  height: 100vh;
+  // &-sidebar {
+  // }
+  &-right {
+    width: 100%;
+  }
+  &-context {
+    height: 100%;
+  }
+}
+</style>

@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 
 import HelloWorld from "@/components/HelloWorld.vue";
+import test from "@/pages/test.vue";
 import DashboardLayout from "@/layout/DashboardLayout.vue";
 const Login = { template: "<div>Login</div>" };
 
@@ -11,6 +12,7 @@ const RootRoute: RouteRecordRaw = {
   meta: {
     title: "Root",
   },
+  children: [{ path: "", component: test }],
 };
 
 const LoginRoute: RouteRecordRaw = {
