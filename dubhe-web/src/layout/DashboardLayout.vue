@@ -1,17 +1,19 @@
 <template>
   <div class="layout">
-    <Sidebar
-      class="layout-sidebar"
-      :is-opened="layoutStore.sidebar.open"
-      :menu-items="[{ name: '123', link: '', icon: '', tooltip: '' }]"
-      :menu-logo="logo"
-    />
-    <div class="layout-right">
+    <div class="layout-top">
       <Header class="layout-header" />
-      <div class="layout-context">
+    </div>
+    <div class="layout-container">
+      <Sidebar
+        class="layout-sidebar"
+        :is-opened="layoutStore.sidebar.open"
+        :menu-logo="logo"
+      />
+      <div class="layout-content">
         <router-view></router-view>
       </div>
     </div>
+    <!-- <div class="layout-right"></div> -->
   </div>
 </template>
 
@@ -28,13 +30,13 @@ const logo = ref("vite.svg");
 <style lang="less" scoped>
 .layout {
   display: flex;
+  flex-direction: column;
   height: 100vh;
-  // &-sidebar {
-  // }
-  &-right {
+  &-top {
     width: 100%;
   }
-  &-context {
+  &-container {
+    display: flex;
     height: 100%;
   }
 }

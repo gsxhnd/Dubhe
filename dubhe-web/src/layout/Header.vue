@@ -1,9 +1,11 @@
 <template>
   <div class="layout-header">
     <Button
-      icon="pi pi-arrow-right"
+      class="collapse"
+      icon="pi pi-align-justify"
       @click="layoutStore.sidebarToggle"
-      label="Submit"
+      text
+      outlined
     />
   </div>
 </template>
@@ -18,5 +20,13 @@ const layoutStore = useLayoutStore();
 .layout-header {
   height: 50px;
   background: @layout-header-bg-color;
+  display: flex;
+  justify-content: left;
+  .collapse {
+    width: 75px;
+    ::v-deep span {
+      font-size: 20px;
+    }
+  }
 }
 </style>

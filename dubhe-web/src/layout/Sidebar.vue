@@ -17,21 +17,13 @@
             :key="index"
             :id="'links_' + index"
           >
-            <router-link v-if="isUsedVueRouter" :to="menuItem.link">
-              <i class="bx" :class="menuItem.icon || 'bx-square-rounded'" />
+            <router-link
+              :to="menuItem.link"
+              v-tooltip="{ value: menuItem.name, disabled: isOpened }"
+            >
+              <i class="pi" :class="menuItem.icon || 'bx-square-rounded'" />
               <span class="links_name">{{ menuItem.name }}</span>
             </router-link>
-            <a
-              v-else
-              @click.stop.prevent="$emit('menuItemClcked', menuItem.link)"
-              :href="menuItem.link"
-            >
-              <i class="bx" :class="menuItem.icon || 'bx-square-rounded'" />
-              <span class="links_name">{{ menuItem.name }}</span>
-            </a>
-            <span :data-target="'links_' + index" class="tooltip">{{
-              menuItem.tooltip || menuItem.name
-            }}</span>
           </li>
         </ul>
       </div>
@@ -47,12 +39,15 @@ interface MenuItems {
   tooltip: string;
 }
 
+let menuItems: Array<MenuItems> = [
+  { name: "Devices", link: "/", icon: "pi-server", tooltip: "" },
+];
+
 defineProps({
   menuLogo: { type: String, default: "" },
   menuTitle: { type: String, default: "Dubhe" },
   isOpened: { type: Boolean, default: true },
   isUsedVueRouter: { type: Boolean, default: false },
-  menuItems: Array<MenuItems>,
   bgColor: {
     type: String,
     default: "#11101d",
@@ -85,6 +80,9 @@ defineProps({
     justify-content: space-between;
     flex-grow: 1;
     max-height: calc(100% - 60px);
+    .nav-list {
+      padding-inline-start: 0px;
+    }
     li {
       position: relative;
       margin: 8px 0;
@@ -94,7 +92,7 @@ defineProps({
       position: relative;
       margin: 8px 0;
       list-style: none;
-      color: #fff;
+      color: aqua;
       height: 60px;
       min-width: 50px;
       font-size: 28px;
@@ -135,6 +133,11 @@ defineProps({
   &.close {
     .logo {
       &-name {
+        display: none;
+      }
+    }
+    .item {
+      span {
         display: none;
       }
     }
