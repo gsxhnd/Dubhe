@@ -24,7 +24,7 @@ const layoutStore = useLayoutStore();
   justify-content: left;
   .collapse {
     width: 75px;
-    ::v-deep span {
+    :deep span {
       font-size: 20px;
     }
   }
