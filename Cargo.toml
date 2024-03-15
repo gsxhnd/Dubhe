@@ -17,7 +17,7 @@ rust-version = "1.68"
 
 
 [path]
-mqtt_code_types = { path = "mqtt-codec" }
+mqtt_codec = { path = "mqtt-codec" }
 dubhe_api = { path = "dubhe-api" }
 dubhe_mqtt = { path = "dubhe-mqtt" }
 dubhe_raft = { path = "dubhe-raft" }
@@ -25,7 +25,7 @@ dubhe_raft = { path = "dubhe-raft" }
 
 [workspace.dependencies]
 axum = { version = "0.7" }
-bytes = { version = "1.4", features = ["serde"] }
+bytes = { version = "1.5", features = ["serde"] }
 clap = { version = "4.3", features = ["derive", "env"] }
 futures = { version = "0.3" }
 futures-util = { version = "0.3" }

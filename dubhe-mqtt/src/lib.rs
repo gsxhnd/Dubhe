@@ -1,3 +1,4 @@
+mod codec;
 mod config;
 mod server;
 mod service;

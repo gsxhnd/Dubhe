@@ -9,9 +9,8 @@ use tokio_util::codec::Framed;
 use tracing::{error, info};
 
 use mqtt_codec::types::ProtocolVersion;
-use mqtt_codec::v3::codec as MqttCodecV3;
-use mqtt_codec::v5::codec as MqttCodecV5;
 
+use crate::codec;
 use crate::config::MqttConfig;
 use crate::service;
 use crate::version::VersionCodec;
@@ -85,21 +84,21 @@ impl MqttServer {
 
             match version {
                 ProtocolVersion::MQTT3 => {
-                    let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
+                    let f = framed.map_codec(|_codec| codec::CodecV3::new());
                     let (packet_sink, packet_stream) = f.split();
                     tokio::spawn(async move {
                         service::process_v3(packet_stream, packet_sink).await;
                     });
                 }
                 ProtocolVersion::MQTT4 => {
-                    let f = framed.map_codec(|_codec| MqttCodecV3::Codec::new());
+                    let f = framed.map_codec(|_codec| codec::CodecV3::new());
                     let (packet_sink, packet_stream) = f.split();
                     tokio::spawn(async move {
                         service::process_v3(packet_stream, packet_sink).await;
                     });
                 }
                 ProtocolVersion::MQTT5 => {
-                    let framed = framed.map_codec(|_codec| MqttCodecV5::Codec::new());
+                    let framed = framed.map_codec(|_codec| codec::CodecV5::new());
                     let (_packet_sink, _packet_stream) = framed.split();
                     // service::process_v5(packet_stream, packet_sink);
                 }

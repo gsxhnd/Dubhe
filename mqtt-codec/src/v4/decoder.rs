@@ -8,23 +8,7 @@ pub fn decode_mqtt(bytes: &mut BytesMut) -> Result<Option<Packet>, DecodeError> 
         return Ok(None);
     }
 
-    let p = Packet::Connect(ConnectPacket {
-        protocol_name: "".to_string(),
-        protocol_version: ProtocolVersion::MQTT3,
-        keep_alive: 0b1000_00000000,
-        // user_name_flag: false,
-        // password_flag: false,
-        // will_retain: true,
-        // will_qos: true,
-        // will_flag: true,
-        clean_start: true,
-        client_id: "".to_string(),
-        user_name: None,
-        password: None,
-    });
-
-    bytes.clear();
-    Ok(Some(p))
+    todo!()
 }
 
 // pub fn read_header(

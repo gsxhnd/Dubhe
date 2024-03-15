@@ -4,12 +4,12 @@ use crate::types::{EncodeError, ProtocolVersion};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Packet {
-    Connect(ConnectPacket),
-    ConnAck(ConnAckPacket),
+    // Connect(ConnectPacket),
+    // ConnAck(ConnAckPacket),
     // Publish(Publish, Option<PublishProperties>),
     // PubAck(PubAck, Option<PubAckProperties>),
-    PingReq(PingReq),
-    PingResp(PingResp),
+    // PingReq(PingReq),
+    // PingResp(PingResp),
     // Subscribe(Subscribe, Option<SubscribeProperties>),
     // SubAck(SubAck, Option<SubAckProperties>),
     // PubRec(PubRec, Option<PubRecProperties>),
@@ -64,33 +64,6 @@ impl From<u8> for PacketType {
     }
 }
 
-// Control Packets
-#[derive(Debug, PartialEq, Clone, Eq)]
-pub struct ConnectPacket {
-    // Variable Header
-    pub protocol_name: String,
-    pub protocol_version: ProtocolVersion,
-    pub clean_start: bool,
-    pub keep_alive: u16,
-
-    // Properties
-    // pub session_expiry_interval: Option<SessionExpiryInterval>,
-    // pub receive_maximum: Option<ReceiveMaximum>,
-    // pub maximum_packet_size: Option<MaximumPacketSize>,
-    // pub topic_alias_maximum: Option<TopicAliasMaximum>,
-    // pub request_response_information: Option<RequestResponseInformation>,
-    // pub request_problem_information: Option<RequestProblemInformation>,
-    // pub user_properties: Vec<UserProperty>,
-    // pub authentication_method: Option<AuthenticationMethod>,
-    // pub authentication_data: Option<AuthenticationData>,
-
-    // Payload
-    pub client_id: String,
-    // pub will: Option<FinalWill>,
-    pub user_name: Option<String>,
-    pub password: Option<String>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConnAckPacket {
     pub session_present: bool,
@@ -111,10 +84,10 @@ impl ConnAckPacket {
             flags |= 0b1;
         };
         let rc = self.code.to_u8();
-        write_u8(buf, offset, header)?;
-        write_u8(buf, offset, length)?;
-        write_u8(buf, offset, flags)?;
-        write_u8(buf, offset, rc)?;
+        // write_u8(buf, offset, header)?;
+        // write_u8(buf, offset, length)?;
+        // write_u8(buf, offset, flags)?;
+        // write_u8(buf, offset, rc)?;
         println!("{:?}", buf);
         Ok(())
     }
@@ -263,10 +236,4 @@ pub struct ConnAckProperties {
     pub server_reference: Option<String>,
     pub authentication_method: Option<String>,
     pub authentication_data: Option<Bytes>,
-}
-
-fn write_u8(buf: &mut [u8], offset: &mut usize, val: u8) -> Result<(), EncodeError> {
-    buf[*offset] = val;
-    *offset += 1;
-    Ok(())
 }

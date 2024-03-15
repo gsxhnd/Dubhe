@@ -50,9 +50,32 @@ impl Header {
         //     retain: hd & 1 == 1,
         // })
 
-        println!("first byte: {} {:?}", first_byte, packet_type);
+        println!(
+            "first byte: {} packet type:{:?}, buffer len: {} ",
+            first_byte,
+            packet_type,
+            buffer.len()
+        );
         let remeaning_size = buffer.get_u8();
         println!("first byte: {:?},len: {}", remeaning_size, buffer.len());
+
+        let mut remaining_length = 0;
+        let mut multiplier = 1;
+
+        for &byte in buffer.iter() {
+            remaining_length += (byte & 0x7F) as usize * multiplier;
+            multiplier *= 128;
+
+            if byte & 0x80 == 0 {
+                break;
+            }
+        }
+
+        println!(
+            "remaining size: {}, buffer len: {}",
+            remaining_length,
+            buffer.len()
+        );
 
         Ok((Header { packet_type }, 1))
     }
