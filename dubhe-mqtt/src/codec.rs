@@ -20,6 +20,7 @@ impl Decoder for CodecV3 {
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         // TODO - Ideally we should keep a state machine to store the data we've read so far.
         info!("v3 decode buf: {:?}", buf);
+        println!("mqtt v5 codec decoder buffer length: {:?}", buf.len());
         decoderV3::decode_mqtt(buf)
     }
 }
@@ -69,7 +70,8 @@ impl Decoder for CodecV5 {
 
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         // TODO - Ideally we should keep a state machine to store the data we've read so far.
-        info!("v3 decode buf: {:?}", buf);
+        info!("v5 decode buf: {:?}", buf);
+        println!("mqtt v5 codec decoder buffer length: {:?}", buf.len());
         decoderV5::decode_mqtt(buf)
     }
 }

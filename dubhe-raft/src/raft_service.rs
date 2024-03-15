@@ -236,7 +236,9 @@ pub mod raft_service_server {
                             request: tonic::Request<super::IdRequestRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move { (*inner).request_id(request).await };
+                            let fut = async move {
+                                <T as RaftService>::request_id(&inner, request).await
+                            };
                             Box::pin(fut)
                         }
                     }

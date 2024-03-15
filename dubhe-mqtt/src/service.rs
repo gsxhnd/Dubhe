@@ -24,7 +24,7 @@ where
                     session_present: true,
                     code: ConnectAckCode::Success,
                 });
-                
+
                 info!("conn ack packet: {:?}", conn_ack_packet);
                 let _ = packet_sink.send(conn_ack_packet).await;
             }

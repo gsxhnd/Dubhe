@@ -1,4 +1,4 @@
-use bytes::BytesMut;
+use bytes::{Buf, BytesMut};
 use tokio_util::codec::Decoder;
 
 use mqtt_codec::types::{DecodeError, ProtocolVersion, MQISDP, MQTT};

@@ -63,8 +63,10 @@ impl MqttServer {
         loop {
             let (stream, addr) = tcp_listener.accept().await.unwrap();
             let mut framed = Framed::new(stream, VersionCodec);
+
             // let (mut packet_sink, mut packet_stream) = framed.split();
             // let connect_packet: crate::version::ConnectPacket = match packet_stream.next().await {
+
             let version = match framed.next().await {
                 Some(Ok(v)) => v,
                 Some(Err(e)) => {
