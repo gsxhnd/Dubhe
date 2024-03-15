@@ -20,6 +20,50 @@ pub enum Packet {
     // Disconnect(Disconnect, Option<DisconnectProperties>),
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum PacketType {
+    RESERVED,
+    CONNECT,
+    CONNACK,
+    PUBLISH,
+    PUBACK,
+    PUBREC,
+    PUBREL,
+    PUBCOMP,
+    SUBSCRIBE,
+    SUBACK,
+    UNSUBSCRIBE,
+    UNSUBACK,
+    PINGREQ,
+    PINGRESP,
+    DISCONNECT,
+    AUTH,
+}
+
+impl From<u8> for PacketType {
+    fn from(num: u8) -> Self {
+        match num {
+            0 => PacketType::RESERVED,
+            1 => PacketType::CONNECT,
+            2 => PacketType::CONNACK,
+            3 => PacketType::PUBLISH,
+            4 => PacketType::PUBACK,
+            5 => PacketType::PUBREC,
+            6 => PacketType::PUBREL,
+            7 => PacketType::PUBCOMP,
+            8 => PacketType::SUBSCRIBE,
+            9 => PacketType::SUBACK,
+            10 => PacketType::UNSUBSCRIBE,
+            11 => PacketType::UNSUBACK,
+            12 => PacketType::PINGREQ,
+            13 => PacketType::PINGRESP,
+            14 => PacketType::DISCONNECT,
+            15 => PacketType::RESERVED,
+            _ => panic!("{} is out of range", num),
+        }
+    }
+}
+
 // Control Packets
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub struct ConnectPacket {

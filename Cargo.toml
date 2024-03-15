@@ -24,7 +24,7 @@ dubhe_raft = { path = "dubhe-raft" }
 
 
 [workspace.dependencies]
-axum = { version = "0.6" }
+axum = { version = "0.7" }
 bytes = { version = "1.4", features = ["serde"] }
 clap = { version = "4.3", features = ["derive", "env"] }
 futures = { version = "0.3" }
@@ -32,7 +32,7 @@ futures-util = { version = "0.3" }
 rust-embed = "8.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
-tokio = { version = "1.28", features = ["full"] }
+tokio = { version = "1.36", features = ["full"] }
 tokio-util = { version = "0.7", features = ["codec"] }
 tokio-stream = "0.1.14"
 tokio-tungstenite = { version = "0.20" }

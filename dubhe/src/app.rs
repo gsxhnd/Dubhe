@@ -18,10 +18,12 @@ pub struct App {
 pub struct AppBuilder {
     config: Config,
 }
+
 impl AppBuilder {
     pub fn new(cfg: Config) -> Self {
         AppBuilder { config: cfg }
     }
+
     pub fn build(self) -> App {
         App {
             runtime: tokio::runtime::Builder::new_multi_thread()
@@ -46,11 +48,13 @@ impl App {
                 ApiServer::new(self.api_config).run().await;
             }));
         }
+
         if self.raft_config.enable {
             services.push(self.runtime.spawn(async {
                 RaftServer::new(self.raft_config).run().await;
             }));
         }
+        
         services.push(self.runtime.spawn(async {
             MqttServer::new(self.mqtt_config).run().await;
         }));

@@ -14,15 +14,15 @@ impl ApiServer {
         let addr: SocketAddr = cfg.listener_addr.parse().expect("msg");
         ApiServer { cfg, addr }
     }
+
     pub async fn run(&self) {
+        let listen = tokio::net::TcpListener::bind(self.addr).await.unwrap();
         let api_router = router::api_router(self.cfg.web.enable);
         self.output().await;
 
-        axum::Server::bind(&self.addr)
-            .serve(api_router.into_make_service())
-            .await
-            .unwrap();
+        axum::serve(listen, api_router).await.unwrap();
     }
+
     async fn output(&self) {
         info!(
             "api service enable, listened in: http://{}/api/v1",

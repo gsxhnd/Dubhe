@@ -23,5 +23,5 @@ axum = { workspace = true }
 mime_guess = "2.0"
 rust-embed = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde_yaml = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
 tracing = { workspace = true }

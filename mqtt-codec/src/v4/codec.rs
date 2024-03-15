@@ -16,6 +16,7 @@ impl Codec {
 impl Decoder for Codec {
     type Item = Packet;
     type Error = DecodeError;
+
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
         // TODO - Ideally we should keep a state machine to store the data we've read so far.
         info!("v3 decode buf: {:?}", buf);

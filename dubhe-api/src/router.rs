@@ -13,17 +13,12 @@ static INDEX_HTML: &str = "index.html";
 struct Assets;
 
 pub fn api_router(web_enable: bool) -> Router {
-    let mut r = Router::new().route("/api/v1/hello", get(root));
+    let mut r = Router::new().route("/api/v1/ping", get(|| async { "pong" }));
 
     if web_enable {
         r = r.fallback(static_handler);
     }
     return r;
-}
-
-// basic handler that responds with a static string
-async fn root() -> &'static str {
-    "Hello, World!"
 }
 
 async fn static_handler(uri: Uri) -> impl IntoResponse {
@@ -48,6 +43,7 @@ async fn static_handler(uri: Uri) -> impl IntoResponse {
         }
     }
 }
+
 async fn index_html() -> Response {
     match Assets::get(INDEX_HTML) {
         Some(content) => Html(content.data).into_response(),

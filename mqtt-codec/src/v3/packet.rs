@@ -1,4 +1,4 @@
-use bytes::Bytes;
+use bytes::{BufMut, Bytes, BytesMut};
 
 use crate::types::{EncodeError, ProtocolVersion};
 
@@ -119,9 +119,19 @@ impl ConnectAckCode {
 
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub struct PingReq {}
+impl PingReq {
+    pub fn read(payload: &mut BytesMut) {
+        payload.put_slice(&[0xC0, 0x00]);
+    }
+}
 
 #[derive(Debug, PartialEq, Clone, Eq)]
 pub struct PingResp {}
+impl PingResp {
+    pub fn write(buffer: &mut BytesMut) {
+        buffer.put_slice(&[0xD0, 0x00]);
+    }
+}
 
 // Acknowledgement to QoS1 publish
 #[derive(Debug, Clone, PartialEq, Eq)]
