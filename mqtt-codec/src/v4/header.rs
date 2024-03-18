@@ -1,7 +1,6 @@
 use bytes::{Buf, BufMut, BytesMut};
 
 use crate::types::DecodeError;
-use crate::v3::packet;
 use crate::v4::packet::PacketType;
 
 #[derive(Debug, Clone, PartialEq)]

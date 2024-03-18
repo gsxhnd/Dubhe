@@ -3,9 +3,9 @@ use bytes::BytesMut;
 // use std::io::Cursor;
 
 use crate::types::DecodeError;
-use crate::v5::packet::*;
+use crate::v5::packet::PacketType;
 
-pub fn decode_mqtt(_bytes: &mut BytesMut) -> Result<Option<Packet>, DecodeError> {
+pub fn decode_mqtt(_bytes: &mut BytesMut) -> Result<Option<PacketType>, DecodeError> {
     todo!()
     // let mut bytes = Cursor::new(bytes);
     // let first_byte = bytes.get_u8();

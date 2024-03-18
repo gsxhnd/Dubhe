@@ -1,7 +1,7 @@
 use crate::{types::EncodeError, v5::packet::*};
 use bytes::BytesMut;
 
-pub fn encode_mqtt(packet: Packet, bytes: &mut BytesMut) -> Result<(), EncodeError> {
+pub fn encode_mqtt(packet: PacketType, bytes: &mut BytesMut) -> Result<(), EncodeError> {
     Ok(())
     // todo!()
     // let remaining_length = packet.calculate_size(protocol_version);
