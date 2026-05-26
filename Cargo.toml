@@ -1,40 +1,19 @@
 [workspace]
-members = ["mqtt-codec", "dubhe-mqtt", "dubhe-raft", "dubhe-api", "dubhe"]
+resolver = "2"
+members = ["mqtt_codec"]
 
 [workspace.package]
 name = "Dubhe"
 version = "0.1.0"
-edition = "2021"
 authors = ["gsxhnd"]
 homepage = ""
-description = "MQTT Server for v3.1, v3.1.1 and v5.0 protocols"
+description = "MQTT Server for v3.1.1 and v5.0 protocols"
 repository = "https://github.com/gsxhnd/Dubhe"
 license = "MIT license"
 categories = ["network"]
 keywords = ["MQTT", "IoT", "messaging", "MQTT Server", "MQTT Broker"]
-exclude = [".gitignore", ".cargo/config"]
-rust-version = "1.68"
-
-
-[path]
-mqtt_code_types = { path = "mqtt-codec" }
-dubhe_api = { path = "dubhe-api" }
-dubhe_mqtt = { path = "dubhe-mqtt" }
-dubhe_raft = { path = "dubhe-raft" }
-
+exclude = [".gitignore", ".cargo/config", ".vscode"]
 
 [workspace.dependencies]
-axum = { version = "0.6" }
-bytes = { version = "1.4", features = ["serde"] }
-clap = { version = "4.3", features = ["derive", "env"] }
-futures = { version = "0.3" }
-futures-util = { version = "0.3" }
-rust-embed = "6.8.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
-tokio = { version = "1.28", features = ["full"] }
-tokio-util = { version = "0.7", features = ["codec"] }
-tokio-stream = "0.1.14"
-tokio-tungstenite = { version = "0.19" }
-tracing = { version = "0.1" }
-tracing-subscriber = "0.3"
+bytes = { version = "1", features = ["serde"] }
+thiserror = "2"
