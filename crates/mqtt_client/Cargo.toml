@@ -1,0 +1,17 @@
+[package]
+name = "mqtt_client"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+description = "Async MQTT client supporting v3.1.1 and v5.0 protocols"
+repository.workspace = true
+license.workspace = true
+categories.workspace = true
+keywords.workspace = true
+exclude.workspace = true
+
+[dependencies]
+mqtt_codec = { path = "../mqtt_codec" }
+bytes = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
