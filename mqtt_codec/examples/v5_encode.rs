@@ -4,9 +4,11 @@ use mqtt_codec::Encoder;
 
 fn main() {
     // Create a MQTT 5.0 Connect packet
-    let mut properties = Properties::default();
-    properties.session_expiry_interval = Some(3600);
-    properties.maximum_packet_size = Some(1024 * 64);
+    let properties = Properties {
+        session_expiry_interval: Some(3600),
+        maximum_packet_size: Some(1024 * 64),
+        ..Default::default()
+    };
 
     let connect_packet = Packet::Connect(ConnectPacket {
         protocol_name: "MQTT".to_string(),
@@ -42,9 +44,11 @@ fn main() {
     }
 
     // Example of Publish packet with properties
-    let mut pub_properties = Properties::default();
-    pub_properties.message_expiry_interval = Some(3600);
-    pub_properties.content_type = Some("application/json".to_string());
+    let pub_properties = Properties {
+        message_expiry_interval: Some(3600),
+        content_type: Some("application/json".to_string()),
+        ..Default::default()
+    };
 
     let publish_packet = Packet::Publish(PublishPacket {
         topic_name: "sensor/temperature".to_string(),

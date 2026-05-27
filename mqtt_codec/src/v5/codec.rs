@@ -36,19 +36,11 @@ use crate::MqttError;
 /// // Decode a packet
 /// // let packet = codec.decode(&mut buffer).unwrap();
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct MqttCodec {
     /// Maximum packet size in bytes (0 means no limit).
     /// This is negotiated during the CONNECT/CONNACK exchange.
     max_packet_size: u32,
-}
-
-impl Default for MqttCodec {
-    fn default() -> Self {
-        Self {
-            max_packet_size: 0, // No limit by default
-        }
-    }
 }
 
 impl MqttCodec {

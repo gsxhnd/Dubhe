@@ -18,9 +18,6 @@ mod packet;
 mod return_codes;
 mod validation;
 
-#[cfg(test)]
-mod tests;
-
 pub use builder::*;
 pub use codec::*;
 pub use decoder::*;

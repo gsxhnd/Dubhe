@@ -40,13 +40,11 @@ pub fn parse_properties(buf: &mut &[u8]) -> Result<Properties, MqttError> {
     while !props_buf.is_empty() {
         let property_id = props_buf.get_u8();
 
-        if !is_multi_value_property(property_id) {
-            if !seen.insert(property_id) {
-                return Err(MqttError::protocol_violation(
-                    format!("Duplicate property ID: 0x{:02X}", property_id),
-                    None,
-                ));
-            }
+        if !is_multi_value_property(property_id) && !seen.insert(property_id) {
+            return Err(MqttError::protocol_violation(
+                format!("Duplicate property ID: 0x{:02X}", property_id),
+                None,
+            ));
         }
 
         match property_id {

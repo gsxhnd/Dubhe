@@ -874,6 +874,10 @@ impl Default for AuthPacket {
 
 /// MQTT v5.0 Packet enum containing all possible packet types.
 #[derive(Debug, Clone)]
+#[expect(
+    clippy::large_enum_variant,
+    reason = "CONNECT carries full Properties; boxing would break the public packet API"
+)]
 pub enum Packet {
     /// Connection request.
     Connect(ConnectPacket),

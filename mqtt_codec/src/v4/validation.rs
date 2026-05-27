@@ -119,13 +119,11 @@ pub fn validate_connect_flags(packet: &ConnectPacket) -> Result<(), MqttError> {
     // This is already enforced by the QoS enum type
 
     // If Will Flag is not set, Will QoS and Will Retain should be 0
-    if !packet.will_flag {
-        if packet.will_qos != QoS::AtMostOnce {
-            return Err(MqttError::protocol_violation(
-                "Will QoS must be 0 when Will Flag is not set",
-                Some(1),
-            ));
-        }
+    if !packet.will_flag && packet.will_qos != QoS::AtMostOnce {
+        return Err(MqttError::protocol_violation(
+            "Will QoS must be 0 when Will Flag is not set",
+            Some(1),
+        ));
     }
 
     Ok(())
@@ -411,11 +409,9 @@ fn validate_wildcards(filter: &str) -> Result<(), MqttError> {
                 // 2. At end and preceded by / (e.g., "topic/+")
                 // 3. Surrounded by / (e.g., "topic/+/subtopic")
                 // 4. Only character (at_start && at_end) (e.g., "+")
-                if !((at_start && followed_by_slash)
-                    || (at_end && preceded_by_slash)
-                    || (preceded_by_slash && followed_by_slash)
-                    || (at_start && at_end))
-                {
+                let valid_plus_wildcard =
+                    (preceded_by_slash || at_start) && (followed_by_slash || at_end);
+                if !valid_plus_wildcard {
                     return Err(MqttError::invalid_topic_filter(
                         filter,
                         TopicFilterErrorReason::InvalidSingleLevelWildcard,

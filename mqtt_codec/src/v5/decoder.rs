@@ -58,7 +58,7 @@ impl Decoder for MqttDecoder {
 
         // Parse fixed header
         let first_byte = src[0];
-        let packet_type = (first_byte >> 4) as u8;
+        let packet_type = first_byte >> 4;
         let flags = first_byte & 0x0F;
 
         // Validate packet type (1-15 for MQTT 5.0)

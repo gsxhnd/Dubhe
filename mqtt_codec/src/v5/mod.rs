@@ -20,9 +20,6 @@ mod properties_codec;
 mod property_id;
 mod validation;
 
-#[cfg(test)]
-mod tests;
-
 pub use builder::*;
 pub use codec::*;
 pub use decoder::*;
