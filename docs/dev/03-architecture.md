@@ -6,7 +6,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Dubhe MQTT Server                        │
+│                      FlowBroker MQTT Server                     │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
@@ -57,7 +57,7 @@
 - v4 模块: MQTT v3.1.1 协议支持
 - v5 模块: MQTT v5.0 协议支持
 
-### dubhe_broker (Broker 核心) — 开发中
+### flow_broker_core (Broker 核心) — 开发中
 
 - Server: TCP/WebSocket 服务器
 - Session Manager: 客户端会话管理
@@ -66,32 +66,32 @@
 - Message Router: 消息路由和分发
 - Storage: 持久化层接口
 
-### dubhe_auth (认证授权) — 计划中
+### flow_broker_auth (认证授权) — 计划中
 
 - Authenticator: 认证接口和实现
 - Authorizer: 授权接口和实现
 - Plugin System: 插件加载和管理
 
-### dubhe_rules (规则引擎) — 计划中
+### flow_broker_rules (规则引擎) — 计划中
 
 - Rule Parser: 规则解析器
 - Rule Engine: 规则执行引擎
 - Actions: 动作执行器
 - Hooks: 钩子系统
 
-### dubhe_api (REST API) — 计划中
+### flow_broker_api (REST API) — 计划中
 
 - Routes: API 路由定义
 - Handlers: 请求处理器
 - Metrics: Prometheus 指标导出
 
-### dubhe_cluster (集群模块) — 计划中
+### flow_broker_cluster (集群模块) — 计划中
 
 - Raft: 共识协议实现
 - gRPC: 节点间通信 (Tonic)
 - Sync: 状态同步
 
-### dubhe_web (Web GUI) — 计划中
+### flow_broker_web (Web GUI) — 计划中
 
 - Vue 3 + Reka UI + Pinia + WebSocket
 
@@ -149,7 +149,7 @@ Client A (Publisher)
 
 ```
 ┌─────────────────────┐
-│    Dubhe Server     │
+│  FlowBroker Server  │
 │  MQTT  : 1883       │
 │  MQTTS : 8883       │
 │  WS    : 8083       │

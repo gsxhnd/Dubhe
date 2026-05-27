@@ -1,14 +1,14 @@
 [workspace]
 resolver = "2"
-members = ["mqtt_codec"]
+members = ["crates/*"]
 
 [workspace.package]
-name = "Dubhe"
+name = "FlowBroker"
 version = "0.1.0"
 authors = ["gsxhnd"]
 homepage = ""
 description = "MQTT Server for v3.1.1 and v5.0 protocols"
-repository = "https://github.com/gsxhnd/Dubhe"
+repository = "https://github.com/gsxhnd/FlowBroker"
 license = "MIT license"
 categories = ["network"]
 keywords = ["MQTT", "IoT", "messaging", "MQTT Server", "MQTT Broker"]
@@ -17,3 +17,4 @@ exclude = [".gitignore", ".cargo/config", ".vscode"]
 [workspace.dependencies]
 bytes = { version = "1", features = ["serde"] }
 thiserror = "2"
+tokio = { version = "1", features = ["full"] }

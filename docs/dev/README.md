@@ -1,6 +1,6 @@
-# Dubhe 开发文档
+# FlowBroker 开发文档
 
-Dubhe 当前处于早期阶段，已落地的核心模块是 `mqtt_codec`，其余模块处于设计或开发中。
+FlowBroker 当前处于早期阶段，已落地的核心模块是 `mqtt_codec` 与 `mqtt_client`，其余模块处于设计或开发中。
 
 ## 文档索引
 

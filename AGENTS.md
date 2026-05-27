@@ -6,18 +6,27 @@ Focused guidance for AI coding agents working in this repository.
 
 ## Project
 
-Dubhe — Rust MQTT broker (early stage). The workspace currently contains only the **`mqtt_codec`** library crate (MQTT v3.1.1 + v5.0 control-packet encode/decode with spec validation). The runnable broker (`dubhe`), MQTT server (`dubhe-mqtt`), Raft clustering, and API layers are planned but not yet in this repo (see [docs/dev/](docs/dev/) and **Planned architecture** below).
+FlowBroker — Rust MQTT broker (early stage). The workspace currently contains **`mqtt_codec`** (MQTT v3.1.1 + v5.0 control-packet encode/decode with spec validation) and **`mqtt_client`** (async client, in progress). The runnable broker (`flow_broker`), MQTT server (`flow_broker_mqtt`), Raft clustering, and API layers are planned but not yet in this repo (see [docs/dev/](docs/dev/) and **Planned architecture** below).
 
 ## Current workspace layout
 
 ```
-Cargo.toml          # workspace root (resolver = "2"); members = ["mqtt_codec"]
-mqtt_codec/         # canonical MQTT codec library
-  src/lib.rs        # Encoder/Decoder traits, MqttError, v4/v5 re-exports
-  src/v4/           # MQTT 3.1.1 (protocol level 4)
-  src/v5/           # MQTT 5.0 (protocol level 5)
-  src/error.rs      # MqttError (thiserror)
-  examples/         # v4_encode, v4_builder, v5_encode, v5_builder
+Cargo.toml          # workspace root (resolver = "2"); members = ["crates/*"]
+crates/
+  mqtt_codec/       # canonical MQTT codec library
+    src/lib.rs      # Encoder/Decoder traits, MqttError, v4/v5 re-exports
+    src/v4/         # MQTT 3.1.1 (protocol level 4)
+    src/v5/         # MQTT 5.0 (protocol level 5)
+    src/error.rs    # MqttError (thiserror)
+    tests/          # integration tests (v4/, v5/ subdirectories)
+    examples/       # v4_encode, v4_builder, v5_encode, v5_builder
+  mqtt_client/      # async MQTT client library
+    src/lib.rs      # public API re-exports
+    src/client.rs   # MqttClient handle + event loop
+    src/config.rs   # ClientConfig, Credentials, LastWill
+    src/error.rs    # ClientError
+    src/event.rs    # Event enum
+    src/transport.rs # TCP transport layer
 docs/dev/           # design docs (broker, cluster, API — aspirational)
 ```
 
@@ -32,12 +41,12 @@ docs/dev/           # design docs (broker, cluster, API — aspirational)
 | Format | `cargo fmt` |
 | Run example | `cargo run -p mqtt_codec --example v4_encode` |
 
-Use `-p mqtt_codec` to scope work to the only workspace member today.
+Use `-p mqtt_codec` or `-p mqtt_client` to scope work to a specific crate.
 
 ## Conventions
 
-- Rust edition 2024; dependencies: `bytes` (with serde), `thiserror`
-- Unit tests are **inline** (`#[cfg(test)]` in source files), not in a separate `tests/` dir
+- Rust edition 2024; dependencies: `bytes` (with serde), `thiserror`, `tokio`
+- Integration tests live under each crate's `tests/` directory (not inline `#[cfg(test)]`)
 - **`mqtt_codec` is the canonical codec crate** — do not add logic to any legacy `mqtt-codec` name
 - Never use `unwrap()`/`expect()` outside tests
 - Use `#[expect(clippy::lint)]` over `#[allow(...)]` with justification
@@ -50,11 +59,11 @@ Use `-p mqtt_codec` to scope work to the only workspace member today.
 
 | Area | Path |
 |------|------|
-| Traits | [mqtt_codec/src/lib.rs](mqtt_codec/src/lib.rs) |
-| v3.1.1 codec | [mqtt_codec/src/v4/codec.rs](mqtt_codec/src/v4/codec.rs), `encoder.rs`, `decoder.rs`, `validation.rs` |
-| v5.0 codec | [mqtt_codec/src/v5/codec.rs](mqtt_codec/src/v5/codec.rs), `properties_codec.rs`, `validation.rs` |
-| Packet types | [mqtt_codec/src/v4/packet.rs](mqtt_codec/src/v4/packet.rs), [mqtt_codec/src/v5/packet.rs](mqtt_codec/src/v5/packet.rs) |
-| Builders | [mqtt_codec/src/v4/builder.rs](mqtt_codec/src/v4/builder.rs), [mqtt_codec/src/v5/builder.rs](mqtt_codec/src/v5/builder.rs) |
+| Traits | [crates/mqtt_codec/src/lib.rs](crates/mqtt_codec/src/lib.rs) |
+| v3.1.1 codec | [crates/mqtt_codec/src/v4/codec.rs](crates/mqtt_codec/src/v4/codec.rs), `encoder.rs`, `decoder.rs`, `validation.rs` |
+| v5.0 codec | [crates/mqtt_codec/src/v5/codec.rs](crates/mqtt_codec/src/v5/codec.rs), `properties_codec.rs`, `validation.rs` |
+| Packet types | [crates/mqtt_codec/src/v4/packet.rs](crates/mqtt_codec/src/v4/packet.rs), [crates/mqtt_codec/src/v5/packet.rs](crates/mqtt_codec/src/v5/packet.rs) |
+| Builders | [crates/mqtt_codec/src/v4/builder.rs](crates/mqtt_codec/src/v4/builder.rs), [crates/mqtt_codec/src/v5/builder.rs](crates/mqtt_codec/src/v5/builder.rs) |
 
 ## Codec design
 
@@ -74,12 +83,12 @@ Use `-p mqtt_codec` to scope work to the only workspace member today.
 
 **Testing**
 
-- Tests live in `#[cfg(test)]` modules (`v4/tests.rs`, `v5/tests.rs`, `validation` tests, etc.).
-- No integration test harness yet; add under `mqtt_codec/tests/` or future `dubhe/tests/` when needed.
+- Integration tests live under `crates/mqtt_codec/tests/` (and per-crate `tests/` for other members).
+- Add future broker tests under `crates/flow_broker/tests/` when that crate lands.
 
 **Common pitfalls**
 
-- Don't assume other workspace crates exist — only `mqtt_codec` is a member today.
+- Don't assume other workspace crates exist beyond `mqtt_codec` and `mqtt_client` today.
 - Codec validates packets; it does **not** implement sessions, QoS state machines, or broker routing.
 - `Maximum packet size` is enforced only on the v5 `MqttCodec` wrapper when configured.
 
@@ -89,15 +98,15 @@ Target multi-crate layout from project design docs:
 
 | Component | Role |
 |-----------|------|
-| `dubhe` | Binary entry: CLI (`--config`), YAML config, `tokio` runtime, spawns services |
-| `dubhe-mqtt` | TCP/TLS/WebSocket listeners; `VersionCodec` on CONNECT; swap v4/v5 codec per connection |
+| `flow_broker` | Binary entry: CLI (`--config`), YAML config, `tokio` runtime, spawns services |
+| `flow_broker_mqtt` | TCP/TLS/WebSocket listeners; `VersionCodec` on CONNECT; swap v4/v5 codec per connection |
 | `mqtt_codec` | **Implemented** — packet encode/decode |
-| `dubhe-raft` | Raft node/server; protobufs via `tonic-build` |
+| `flow_broker_raft` | Raft node/server; protobufs via `tonic-build` |
 
 **Planned workflow (when crates land)**
 
 - Install `protoc` for `tonic-build` (`brew install protobuf` on macOS).
-- Run app: `cargo run -p dubhe -- --config conf/test.yaml`
+- Run app: `cargo run -p flow_broker -- --config conf/test.yaml`
 - Example configs: `conf/test.yaml`, `conf/cluster/` (not present until broker crate exists).
 - `VersionCodec` reads protocol name + level only; full CONNECT validation happens after codec selection.
 

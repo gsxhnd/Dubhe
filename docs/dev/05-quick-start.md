@@ -9,8 +9,8 @@
 ## 获取代码
 
 ```bash
-git clone https://github.com/gsxhnd/Dubhe.git
-cd Dubhe
+git clone https://github.com/gsxhnd/FlowBroker.git
+cd FlowBroker
 ```
 
 ## 构建
