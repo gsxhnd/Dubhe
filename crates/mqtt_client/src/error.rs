@@ -28,4 +28,16 @@ pub enum ClientError {
     /// The internal channel was closed unexpectedly.
     #[error("internal channel closed")]
     ChannelClosed,
+
+    /// Protocol version is not implemented.
+    #[error("unsupported protocol version")]
+    UnsupportedProtocol,
+
+    /// An unexpected control packet was received.
+    #[error("unexpected packet: {0}")]
+    UnexpectedPacket(String),
+
+    /// QoS must be 0, 1, or 2.
+    #[error("invalid QoS level: {0}")]
+    InvalidQoS(u8),
 }

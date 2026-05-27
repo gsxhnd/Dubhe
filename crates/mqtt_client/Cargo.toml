@@ -10,8 +10,17 @@ categories.workspace = true
 keywords.workspace = true
 exclude.workspace = true
 
+[[bin]]
+name = "mqtt"
+path = "src/main.rs"
+
 [dependencies]
 mqtt_codec = { path = "../mqtt_codec" }
 bytes = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+
+[lib]
+path = "src/lib.rs"

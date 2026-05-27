@@ -14,6 +14,38 @@ pub enum ProtocolVersion {
     V5,
 }
 
+impl std::str::FromStr for ProtocolVersion {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "v4" | "3.1.1" | "311" | "mqtt311" | "mqtt3" => Ok(Self::V4),
+            "v5" | "5.0" | "mqtt5" | "mqttv5" => Ok(Self::V5),
+            other => Err(format!(
+                "unknown protocol version '{other}' (use v4/3.1.1 or v5/5.0)"
+            )),
+        }
+    }
+}
+
+impl ProtocolVersion {
+    /// Wire protocol level sent in CONNECT.
+    pub fn protocol_level(self) -> u8 {
+        match self {
+            Self::V4 => 4,
+            Self::V5 => 5,
+        }
+    }
+
+    /// Human-readable label for logs and CLI help.
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::V4 => "MQTT v3.1.1",
+            Self::V5 => "MQTT v5.0",
+        }
+    }
+}
+
 /// Authentication credentials.
 #[derive(Debug, Clone)]
 pub struct Credentials {
@@ -41,7 +73,7 @@ pub struct ClientConfig {
     pub protocol_version: ProtocolVersion,
     /// Keep-alive interval in seconds.
     pub keep_alive: u16,
-    /// Whether to start a clean session/start.
+    /// Clean session (v3.1.1) / clean start (v5.0).
     pub clean_session: bool,
     /// Optional credentials.
     pub credentials: Option<Credentials>,

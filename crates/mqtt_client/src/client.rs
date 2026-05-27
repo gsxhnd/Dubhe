@@ -6,10 +6,11 @@ use tokio::sync::mpsc;
 use crate::config::ClientConfig;
 use crate::error::ClientError;
 use crate::event::Event;
+use crate::session;
 
 /// Commands sent from the client handle to the event loop.
 #[derive(Debug)]
-enum Command {
+pub(crate) enum Command {
     Publish {
         topic: String,
         payload: Bytes,
@@ -45,7 +46,7 @@ impl MqttClient {
         let (event_tx, event_rx) = mpsc::channel(256);
 
         tokio::spawn(async move {
-            let _ = event_loop(config, command_rx, event_tx).await;
+            let _ = session::run_event_loop(config, command_rx, event_tx).await;
         });
 
         let client = Self { command_tx };
@@ -97,26 +98,4 @@ impl MqttClient {
             .await
             .map_err(|_| ClientError::ChannelClosed)
     }
-}
-
-/// Internal event loop that drives the MQTT connection.
-///
-/// Handles:
-/// - TCP connection establishment
-/// - CONNECT/CONNACK handshake
-/// - Sending outgoing packets (PUBLISH, SUBSCRIBE, UNSUBSCRIBE, PINGREQ)
-/// - Receiving incoming packets and emitting events
-/// - Keep-alive ping management
-/// - QoS 1/2 acknowledgment state machines
-async fn event_loop(
-    _config: ClientConfig,
-    mut _command_rx: mpsc::Receiver<Command>,
-    _event_tx: mpsc::Sender<Event>,
-) -> Result<(), ClientError> {
-    // TODO(#1): Implement connection establishment
-    // TODO(#2): Implement CONNECT/CONNACK handshake
-    // TODO(#3): Implement packet read/write loop
-    // TODO(#4): Implement keep-alive ping timer
-    // TODO(#5): Implement QoS state machines
-    Ok(())
 }
