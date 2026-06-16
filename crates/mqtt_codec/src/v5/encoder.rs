@@ -5,9 +5,9 @@
 
 use crate::v5::packet::*;
 use crate::v5::validation::validate_packet;
-use bytes::{BufMut, BytesMut};
 use crate::Encoder;
 use crate::MqttError;
+use bytes::{BufMut, BytesMut};
 
 /// Constants for MQTT 5.0 protocol.
 const CONTINUATION_BIT: u8 = 0x80;
@@ -288,6 +288,15 @@ fn encode_properties(props: &Properties, dst: &mut BytesMut) {
     dst.put(props_buf);
 }
 
+fn encode_reason_tail(reason_code: ReasonCode, properties: &Properties, dst: &mut BytesMut) {
+    if reason_code == ReasonCode::Success && properties.is_empty() {
+        return;
+    }
+
+    dst.put_u8(reason_code.as_u8());
+    encode_properties(properties, dst);
+}
+
 // ============================================================================
 // Packet encoding functions
 // ============================================================================
@@ -420,8 +429,7 @@ fn encode_publish_packet(packet: PublishPacket, dst: &mut BytesMut) -> Result<()
 fn encode_puback_packet(packet: PubAckPacket, dst: &mut BytesMut) -> Result<(), MqttError> {
     let mut payload = BytesMut::new();
     payload.put_u16(packet.packet_id);
-    payload.put_u8(packet.reason_code.as_u8());
-    encode_properties(&packet.properties, &mut payload);
+    encode_reason_tail(packet.reason_code, &packet.properties, &mut payload);
 
     dst.put_u8(0x40); // PUBACK packet type
     encode_remaining_length(payload.len(), dst);
@@ -434,8 +442,7 @@ fn encode_puback_packet(packet: PubAckPacket, dst: &mut BytesMut) -> Result<(), 
 fn encode_pubrec_packet(packet: PubRecPacket, dst: &mut BytesMut) -> Result<(), MqttError> {
     let mut payload = BytesMut::new();
     payload.put_u16(packet.packet_id);
-    payload.put_u8(packet.reason_code.as_u8());
-    encode_properties(&packet.properties, &mut payload);
+    encode_reason_tail(packet.reason_code, &packet.properties, &mut payload);
 
     dst.put_u8(0x50); // PUBREC packet type
     encode_remaining_length(payload.len(), dst);
@@ -448,8 +455,7 @@ fn encode_pubrec_packet(packet: PubRecPacket, dst: &mut BytesMut) -> Result<(), 
 fn encode_pubrel_packet(packet: PubRelPacket, dst: &mut BytesMut) -> Result<(), MqttError> {
     let mut payload = BytesMut::new();
     payload.put_u16(packet.packet_id);
-    payload.put_u8(packet.reason_code.as_u8());
-    encode_properties(&packet.properties, &mut payload);
+    encode_reason_tail(packet.reason_code, &packet.properties, &mut payload);
 
     dst.put_u8(0x62); // PUBREL packet type with flags (bit 1 must be 1)
     encode_remaining_length(payload.len(), dst);
@@ -462,8 +468,7 @@ fn encode_pubrel_packet(packet: PubRelPacket, dst: &mut BytesMut) -> Result<(), 
 fn encode_pubcomp_packet(packet: PubCompPacket, dst: &mut BytesMut) -> Result<(), MqttError> {
     let mut payload = BytesMut::new();
     payload.put_u16(packet.packet_id);
-    payload.put_u8(packet.reason_code.as_u8());
-    encode_properties(&packet.properties, &mut payload);
+    encode_reason_tail(packet.reason_code, &packet.properties, &mut payload);
 
     dst.put_u8(0x70); // PUBCOMP packet type
     encode_remaining_length(payload.len(), dst);
@@ -473,10 +478,7 @@ fn encode_pubcomp_packet(packet: PubCompPacket, dst: &mut BytesMut) -> Result<()
 }
 
 /// Encode a SUBSCRIBE packet.
-fn encode_subscribe_packet(
-    packet: SubscribePacket,
-    dst: &mut BytesMut,
-) -> Result<(), MqttError> {
+fn encode_subscribe_packet(packet: SubscribePacket, dst: &mut BytesMut) -> Result<(), MqttError> {
     let mut payload = BytesMut::new();
     payload.put_u16(packet.packet_id);
 
@@ -543,10 +545,7 @@ fn encode_unsubscribe_packet(
 }
 
 /// Encode an UNSUBACK packet.
-fn encode_unsuback_packet(
-    packet: UnsubAckPacket,
-    dst: &mut BytesMut,
-) -> Result<(), MqttError> {
+fn encode_unsuback_packet(packet: UnsubAckPacket, dst: &mut BytesMut) -> Result<(), MqttError> {
     let mut payload = BytesMut::new();
     payload.put_u16(packet.packet_id);
 
@@ -580,13 +579,9 @@ fn encode_pingresp_packet(dst: &mut BytesMut) -> Result<(), MqttError> {
 }
 
 /// Encode a DISCONNECT packet.
-fn encode_disconnect_packet(
-    packet: DisconnectPacket,
-    dst: &mut BytesMut,
-) -> Result<(), MqttError> {
+fn encode_disconnect_packet(packet: DisconnectPacket, dst: &mut BytesMut) -> Result<(), MqttError> {
     let mut payload = BytesMut::new();
-    payload.put_u8(packet.reason_code.as_u8());
-    encode_properties(&packet.properties, &mut payload);
+    encode_reason_tail(packet.reason_code, &packet.properties, &mut payload);
 
     dst.put_u8(0xE0); // DISCONNECT packet type
     encode_remaining_length(payload.len(), dst);
@@ -598,8 +593,7 @@ fn encode_disconnect_packet(
 /// Encode an AUTH packet.
 fn encode_auth_packet(packet: AuthPacket, dst: &mut BytesMut) -> Result<(), MqttError> {
     let mut payload = BytesMut::new();
-    payload.put_u8(packet.reason_code.as_u8());
-    encode_properties(&packet.properties, &mut payload);
+    encode_reason_tail(packet.reason_code, &packet.properties, &mut payload);
 
     dst.put_u8(0xF0); // AUTH packet type
     encode_remaining_length(payload.len(), dst);

@@ -37,7 +37,10 @@ fn test_subscribe_with_many_topic_filters() {
     for i in 0..100 {
         topics.push((format!("sensor/{}/data", i), QoS::AtLeastOnce));
     }
-    let subscribe_packet = Packet::Subscribe(SubscribePacket { packet_id: 1, topics });
+    let subscribe_packet = Packet::Subscribe(SubscribePacket {
+        packet_id: 1,
+        topics,
+    });
     codec.encode(subscribe_packet.clone(), &mut buffer).unwrap();
     let decoded_packet = codec.decode(&mut buffer).unwrap().unwrap();
     match (subscribe_packet, decoded_packet) {
@@ -128,7 +131,9 @@ fn test_suback_with_max_return_codes() {
 fn test_pingreq_minimal_size() {
     let mut codec = MqttCodec::new();
     let mut buffer = BytesMut::new();
-    codec.encode(Packet::PingReq(PingReqPacket), &mut buffer).unwrap();
+    codec
+        .encode(Packet::PingReq(PingReqPacket), &mut buffer)
+        .unwrap();
     assert_eq!(buffer.len(), 2);
     assert_eq!(buffer[0], 0xC0);
     assert_eq!(buffer[1], 0x00);
@@ -138,7 +143,9 @@ fn test_pingreq_minimal_size() {
 fn test_pingresp_minimal_size() {
     let mut codec = MqttCodec::new();
     let mut buffer = BytesMut::new();
-    codec.encode(Packet::PingResp(PingRespPacket), &mut buffer).unwrap();
+    codec
+        .encode(Packet::PingResp(PingRespPacket), &mut buffer)
+        .unwrap();
     assert_eq!(buffer.len(), 2);
     assert_eq!(buffer[0], 0xD0);
     assert_eq!(buffer[1], 0x00);
@@ -264,4 +271,37 @@ fn test_subscribe_topic_filter_count() {
             _ => panic!("Expected SUBSCRIBE packet"),
         }
     }
+}
+
+#[test]
+fn decode_should_wait_when_remaining_length_is_incomplete() {
+    let mut codec = MqttCodec::new();
+    let mut buffer = BytesMut::from(&[0xC0, 0x80][..]);
+
+    assert!(codec.decode(&mut buffer).unwrap().is_none());
+    assert_eq!(buffer.as_ref(), &[0xC0, 0x80]);
+}
+
+#[test]
+fn decode_should_reject_non_minimal_remaining_length() {
+    let mut codec = MqttCodec::new();
+    let mut buffer = BytesMut::from(&[0xC0, 0x80, 0x00][..]);
+
+    assert!(codec.decode(&mut buffer).is_err());
+}
+
+#[test]
+fn decode_should_reject_pingreq_with_non_zero_remaining_length() {
+    let mut codec = MqttCodec::new();
+    let mut buffer = BytesMut::from(&[0xC0, 0x01, 0x00][..]);
+
+    assert!(codec.decode(&mut buffer).is_err());
+}
+
+#[test]
+fn decode_should_reject_puback_with_trailing_bytes() {
+    let mut codec = MqttCodec::new();
+    let mut buffer = BytesMut::from(&[0x40, 0x03, 0x00, 0x01, 0x00][..]);
+
+    assert!(codec.decode(&mut buffer).is_err());
 }

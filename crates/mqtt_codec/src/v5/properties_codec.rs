@@ -6,9 +6,9 @@
 use bytes::{Buf, Bytes};
 use std::collections::HashSet;
 
-use crate::MqttError;
 use super::packet::{Properties, QoS};
 use super::property_id::PropertyType;
+use crate::MqttError;
 
 const CONTINUATION_BIT: u8 = 0x80;
 const LENGTH_MASK: u8 = 0x7F;
@@ -72,8 +72,7 @@ pub fn parse_properties(buf: &mut &[u8]) -> Result<Properties, MqttError> {
                 properties.session_expiry_interval = Some(read_u32(&mut props_buf)?);
             }
             0x12 => {
-                properties.assigned_client_identifier =
-                    Some(parse_utf8_string(&mut props_buf)?);
+                properties.assigned_client_identifier = Some(parse_utf8_string(&mut props_buf)?);
             }
             0x13 => {
                 properties.server_keep_alive = Some(read_u16(&mut props_buf)?);
@@ -86,14 +85,14 @@ pub fn parse_properties(buf: &mut &[u8]) -> Result<Properties, MqttError> {
             }
             0x17 => {
                 properties.request_problem_information =
-                    Some(read_byte(&mut props_buf)? != 0);
+                    Some(read_boolean(&mut props_buf, property_id)?);
             }
             0x18 => {
                 properties.will_delay_interval = Some(read_u32(&mut props_buf)?);
             }
             0x19 => {
                 properties.request_response_information =
-                    Some(read_byte(&mut props_buf)? != 0);
+                    Some(read_boolean(&mut props_buf, property_id)?);
             }
             0x1A => {
                 properties.response_information = Some(parse_utf8_string(&mut props_buf)?);
@@ -120,7 +119,7 @@ pub fn parse_properties(buf: &mut &[u8]) -> Result<Properties, MqttError> {
                 })?);
             }
             0x25 => {
-                properties.retain_available = Some(read_byte(&mut props_buf)? != 0);
+                properties.retain_available = Some(read_boolean(&mut props_buf, property_id)?);
             }
             0x26 => {
                 let key = parse_utf8_string(&mut props_buf)?;
@@ -132,15 +131,15 @@ pub fn parse_properties(buf: &mut &[u8]) -> Result<Properties, MqttError> {
             }
             0x28 => {
                 properties.wildcard_subscription_available =
-                    Some(read_byte(&mut props_buf)? != 0);
+                    Some(read_boolean(&mut props_buf, property_id)?);
             }
             0x29 => {
                 properties.subscription_identifiers_available =
-                    Some(read_byte(&mut props_buf)? != 0);
+                    Some(read_boolean(&mut props_buf, property_id)?);
             }
             0x2A => {
                 properties.shared_subscription_available =
-                    Some(read_byte(&mut props_buf)? != 0);
+                    Some(read_boolean(&mut props_buf, property_id)?);
             }
             unknown => {
                 if let Some(property_type) = PropertyType::from_id(unknown) {
@@ -158,11 +157,30 @@ pub fn parse_properties(buf: &mut &[u8]) -> Result<Properties, MqttError> {
     Ok(properties)
 }
 
+/// Parses a required MQTT v5 Properties field from `buf` and advances past it.
+pub fn parse_required_properties(buf: &mut &[u8]) -> Result<Properties, MqttError> {
+    if buf.is_empty() {
+        return Err(MqttError::incomplete(1, 0));
+    }
+    parse_properties(buf)
+}
+
 fn read_byte(buf: &mut &[u8]) -> Result<u8, MqttError> {
     if buf.is_empty() {
         return Err(MqttError::incomplete(1, 0));
     }
     Ok(buf.get_u8())
+}
+
+fn read_boolean(buf: &mut &[u8], property_id: u8) -> Result<bool, MqttError> {
+    match read_byte(buf)? {
+        0 => Ok(false),
+        1 => Ok(true),
+        value => Err(MqttError::invalid_property(
+            property_id,
+            format!("Boolean value must be 0 or 1, got {value}"),
+        )),
+    }
 }
 
 fn read_u16(buf: &mut &[u8]) -> Result<u16, MqttError> {

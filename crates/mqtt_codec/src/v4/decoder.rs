@@ -6,7 +6,7 @@
 use crate::v4::packet::*;
 use crate::v4::return_codes::{ConnectReturnCode, SubAckReturnCode};
 use crate::v4::validation::{
-    validate_connect_packet, validate_connack_packet, validate_fixed_header_flags, validate_packet,
+    validate_connack_packet, validate_connect_packet, validate_fixed_header_flags, validate_packet,
     validate_packet_id, validate_topic_filter, validate_topic_name,
 };
 use crate::Decoder;
@@ -77,6 +77,9 @@ impl Decoder for MqttDecoder {
 
         // Parse remaining length
         let (remaining_length, header_size) = parse_remaining_length(&src[1..])?;
+        if header_size == 0 {
+            return Ok(None);
+        }
 
         let total_length = 1 + header_size + remaining_length;
 
@@ -101,9 +104,18 @@ impl Decoder for MqttDecoder {
             9 => parse_suback_packet(packet_buf)?,
             10 => parse_unsubscribe_packet(packet_buf)?,
             11 => parse_unsuback_packet(packet_buf)?,
-            12 => Packet::PingReq(PingReqPacket),
-            13 => Packet::PingResp(PingRespPacket),
-            14 => Packet::Disconnect(DisconnectPacket),
+            12 => {
+                ensure_empty_body(packet_buf, "PINGREQ", 12)?;
+                Packet::PingReq(PingReqPacket)
+            }
+            13 => {
+                ensure_empty_body(packet_buf, "PINGRESP", 13)?;
+                Packet::PingResp(PingRespPacket)
+            }
+            14 => {
+                ensure_empty_body(packet_buf, "DISCONNECT", 14)?;
+                Packet::Disconnect(DisconnectPacket)
+            }
             _ => unreachable!(),
         };
 
@@ -143,6 +155,11 @@ fn parse_remaining_length(buf: &[u8]) -> Result<(usize, usize), MqttError> {
         }
 
         if (encoded_byte & CONTINUATION_BIT) == 0 {
+            if idx != variable_length_byte_count(remaining_length) {
+                return Err(MqttError::InvalidRemainingLength {
+                    length: remaining_length,
+                });
+            }
             return Ok((remaining_length, idx));
         }
 
@@ -150,9 +167,38 @@ fn parse_remaining_length(buf: &[u8]) -> Result<(usize, usize), MqttError> {
     }
 }
 
+fn variable_length_byte_count(value: usize) -> usize {
+    match value {
+        0..=127 => 1,
+        128..=16_383 => 2,
+        16_384..=2_097_151 => 3,
+        _ => 4,
+    }
+}
+
 // ============================================================================
 // Helper functions for decoding
 // ============================================================================
+
+fn ensure_empty_body(buf: &[u8], packet_name: &str, packet_type: u8) -> Result<(), MqttError> {
+    if !buf.is_empty() {
+        return Err(MqttError::protocol_violation(
+            format!("{packet_name} remaining length must be 0"),
+            Some(packet_type),
+        ));
+    }
+    Ok(())
+}
+
+fn ensure_no_remaining(buf: &[u8], packet_name: &str, packet_type: u8) -> Result<(), MqttError> {
+    if !buf.is_empty() {
+        return Err(MqttError::protocol_violation(
+            format!("{packet_name} contains {} trailing byte(s)", buf.len()),
+            Some(packet_type),
+        ));
+    }
+    Ok(())
+}
 
 /// Parse a UTF-8 string from the buffer.
 ///
@@ -243,9 +289,8 @@ fn parse_connect_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
     let username_flag = (connect_flags & 0x80) != 0;
     let password_flag = (connect_flags & 0x40) != 0;
     let will_retain = (connect_flags & 0x20) != 0;
-    let will_qos = QoS::try_from((connect_flags & 0x18) >> 3).map_err(|e| {
-        MqttError::protocol_violation(format!("Invalid Will QoS: {}", e), Some(1))
-    })?;
+    let will_qos = QoS::try_from((connect_flags & 0x18) >> 3)
+        .map_err(|e| MqttError::protocol_violation(format!("Invalid Will QoS: {}", e), Some(1)))?;
     let will_flag = (connect_flags & 0x04) != 0;
     let clean_session = (connect_flags & 0x02) != 0;
 
@@ -284,6 +329,7 @@ fn parse_connect_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
     } else {
         None
     };
+    ensure_no_remaining(buf, "CONNECT", 1)?;
 
     let packet = ConnectPacket {
         protocol_name,
@@ -338,15 +384,15 @@ fn parse_connack_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
     let return_code_raw = buf.get_u8();
 
     // Validate and convert return code
-    let return_code = ConnectReturnCode::try_from(return_code_raw).map_err(|code| {
-        MqttError::invalid_return_code(code)
-    })?;
+    let return_code =
+        ConnectReturnCode::try_from(return_code_raw).map_err(MqttError::invalid_return_code)?;
 
     let packet = ConnAckPacket {
         session_present,
         return_code,
     };
     validate_connack_packet(&packet)?;
+    ensure_no_remaining(buf, "CONNACK", 2)?;
 
     Ok(Packet::ConnAck(packet))
 }
@@ -416,6 +462,7 @@ fn parse_puback_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 
     let packet_id = buf.get_u16();
     validate_packet_id(packet_id)?;
+    ensure_no_remaining(buf, "PUBACK", 4)?;
 
     Ok(Packet::PubAck(PubAckPacket { packet_id }))
 }
@@ -428,6 +475,7 @@ fn parse_pubrec_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 
     let packet_id = buf.get_u16();
     validate_packet_id(packet_id)?;
+    ensure_no_remaining(buf, "PUBREC", 5)?;
 
     Ok(Packet::PubRec(PubRecPacket { packet_id }))
 }
@@ -440,6 +488,7 @@ fn parse_pubrel_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 
     let packet_id = buf.get_u16();
     validate_packet_id(packet_id)?;
+    ensure_no_remaining(buf, "PUBREL", 6)?;
 
     Ok(Packet::PubRel(PubRelPacket { packet_id }))
 }
@@ -452,6 +501,7 @@ fn parse_pubcomp_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 
     let packet_id = buf.get_u16();
     validate_packet_id(packet_id)?;
+    ensure_no_remaining(buf, "PUBCOMP", 7)?;
 
     Ok(Packet::PubComp(PubCompPacket { packet_id }))
 }
@@ -529,9 +579,8 @@ fn parse_suback_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
         let code = buf.get_u8();
 
         // Validate return code
-        let return_code = SubAckReturnCode::try_from(code).map_err(|_| {
-            MqttError::invalid_return_code(code)
-        })?;
+        let return_code =
+            SubAckReturnCode::try_from(code).map_err(|_| MqttError::invalid_return_code(code))?;
 
         return_codes.push(return_code);
     }
@@ -598,6 +647,7 @@ fn parse_unsuback_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 
     let packet_id = buf.get_u16();
     validate_packet_id(packet_id)?;
+    ensure_no_remaining(buf, "UNSUBACK", 11)?;
 
     Ok(Packet::UnsubAck(UnsubAckPacket { packet_id }))
 }

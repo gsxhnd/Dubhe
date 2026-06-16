@@ -1236,8 +1236,7 @@ fn test_puback_size_v5() {
     codec.encode(packet, &mut buffer).unwrap();
 
     // PUBACK with default properties should be minimal
-    // At minimum: type+flags + length + packet_id + property_length + reason_code
-    assert!(buffer.len() >= 4);
+    assert_eq!(buffer.as_ref(), &[0x40, 0x02, 0x03, 0xE8]);
 }
 
 #[test]
@@ -1324,4 +1323,45 @@ fn test_connect_with_properties_size_v5() {
         }
         _ => panic!("Expected CONNECT packet"),
     }
+}
+
+#[test]
+fn decode_should_wait_when_remaining_length_is_incomplete_v5() {
+    let mut codec = MqttCodec::new();
+    let mut buffer = BytesMut::from(&[0xC0, 0x80][..]);
+
+    assert!(codec.decode(&mut buffer).unwrap().is_none());
+    assert_eq!(buffer.as_ref(), &[0xC0, 0x80]);
+}
+
+#[test]
+fn decode_should_reject_non_minimal_remaining_length_v5() {
+    let mut codec = MqttCodec::new();
+    let mut buffer = BytesMut::from(&[0xC0, 0x80, 0x00][..]);
+
+    assert!(codec.decode(&mut buffer).is_err());
+}
+
+#[test]
+fn decode_should_reject_pingreq_with_non_zero_remaining_length_v5() {
+    let mut codec = MqttCodec::new();
+    let mut buffer = BytesMut::from(&[0xC0, 0x01, 0x00][..]);
+
+    assert!(codec.decode(&mut buffer).is_err());
+}
+
+#[test]
+fn decode_should_reject_connack_missing_properties_length_v5() {
+    let mut codec = MqttCodec::new();
+    let mut buffer = BytesMut::from(&[0x20, 0x02, 0x00, 0x00][..]);
+
+    assert!(codec.decode(&mut buffer).is_err());
+}
+
+#[test]
+fn decode_should_reject_invalid_boolean_property_v5() {
+    let mut codec = MqttCodec::new();
+    let mut buffer = BytesMut::from(&[0x20, 0x05, 0x00, 0x00, 0x02, 0x25, 0x02][..]);
+
+    assert!(codec.decode(&mut buffer).is_err());
 }

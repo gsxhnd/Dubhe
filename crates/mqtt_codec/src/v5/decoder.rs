@@ -4,7 +4,7 @@
 //! handling the conversion from raw bytes into structured `Packet` variants.
 
 use crate::v5::packet::*;
-use crate::v5::properties_codec::parse_properties;
+use crate::v5::properties_codec::parse_required_properties;
 use crate::v5::validation::{validate_fixed_header_flags, validate_packet};
 use crate::Decoder;
 use crate::MqttError;
@@ -69,13 +69,15 @@ impl Decoder for MqttDecoder {
             )));
         }
 
-        let packet_type_enum = PacketType::from_u8(packet_type).ok_or_else(|| {
-            MqttError::malformed(format!("Invalid packet type: {}", packet_type))
-        })?;
+        let packet_type_enum = PacketType::from_u8(packet_type)
+            .ok_or_else(|| MqttError::malformed(format!("Invalid packet type: {}", packet_type)))?;
         validate_fixed_header_flags(packet_type_enum, flags)?;
 
         // Parse remaining length
         let (remaining_length, header_size) = parse_remaining_length(&src[1..])?;
+        if header_size == 0 {
+            return Ok(None);
+        }
 
         let total_length = 1 + header_size + remaining_length;
 
@@ -100,8 +102,14 @@ impl Decoder for MqttDecoder {
             9 => parse_suback_packet(packet_buf)?,
             10 => parse_unsubscribe_packet(packet_buf)?,
             11 => parse_unsuback_packet(packet_buf)?,
-            12 => Packet::PingReq(PingReqPacket),
-            13 => Packet::PingResp(PingRespPacket),
+            12 => {
+                ensure_empty_body(packet_buf, "PINGREQ", 12)?;
+                Packet::PingReq(PingReqPacket)
+            }
+            13 => {
+                ensure_empty_body(packet_buf, "PINGRESP", 13)?;
+                Packet::PingResp(PingRespPacket)
+            }
             14 => parse_disconnect_packet(packet_buf)?,
             15 => parse_auth_packet(packet_buf)?,
             _ => unreachable!(),
@@ -143,11 +151,56 @@ fn parse_remaining_length(buf: &[u8]) -> Result<(usize, usize), MqttError> {
         }
 
         if (encoded_byte & CONTINUATION_BIT) == 0 {
+            if idx != variable_length_byte_count(remaining_length) {
+                return Err(MqttError::InvalidRemainingLength {
+                    length: remaining_length,
+                });
+            }
             return Ok((remaining_length, idx));
         }
 
         multiplier *= 128;
     }
+}
+
+fn variable_length_byte_count(value: usize) -> usize {
+    match value {
+        0..=127 => 1,
+        128..=16_383 => 2,
+        16_384..=2_097_151 => 3,
+        _ => 4,
+    }
+}
+
+fn ensure_empty_body(buf: &[u8], packet_name: &str, packet_type: u8) -> Result<(), MqttError> {
+    if !buf.is_empty() {
+        return Err(MqttError::protocol_violation(
+            format!("{packet_name} remaining length must be 0"),
+            Some(packet_type),
+        ));
+    }
+    Ok(())
+}
+
+fn ensure_no_remaining(buf: &[u8], packet_name: &str, packet_type: u8) -> Result<(), MqttError> {
+    if !buf.is_empty() {
+        return Err(MqttError::protocol_violation(
+            format!("{packet_name} contains {} trailing byte(s)", buf.len()),
+            Some(packet_type),
+        ));
+    }
+    Ok(())
+}
+
+fn parse_reason_tail_properties(
+    _reason_code: ReasonCode,
+    buf: &mut &[u8],
+    _packet_name: &str,
+) -> Result<Properties, MqttError> {
+    if buf.is_empty() {
+        return Ok(Properties::new());
+    }
+    parse_required_properties(buf)
 }
 
 /// Parse a UTF-8 string from the buffer.
@@ -199,20 +252,19 @@ fn parse_connect_packet(_first_byte: u8, mut buf: &[u8]) -> Result<Packet, MqttE
 
     let clean_start = (connect_flags & 0x02) != 0;
     let will_flag = (connect_flags & 0x04) != 0;
-    let will_qos = QoS::try_from((connect_flags & 0x18) >> 3).map_err(|e| {
-        MqttError::protocol_violation(format!("Invalid Will QoS: {}", e), Some(1))
-    })?;
+    let will_qos = QoS::try_from((connect_flags & 0x18) >> 3)
+        .map_err(|e| MqttError::protocol_violation(format!("Invalid Will QoS: {}", e), Some(1)))?;
     let will_retain = (connect_flags & 0x20) != 0;
     let password_flag = (connect_flags & 0x40) != 0;
     let username_flag = (connect_flags & 0x80) != 0;
 
     let keep_alive = buf.get_u16();
-    let properties = parse_properties(&mut buf)?;
+    let properties = parse_required_properties(&mut buf)?;
 
     let client_id = parse_utf8_string(&mut buf)?;
 
     let (will_topic, will_message, will_properties) = if will_flag {
-        let will_props = parse_properties(&mut buf)?;
+        let will_props = parse_required_properties(&mut buf)?;
         let topic = parse_utf8_string(&mut buf)?;
         let len = buf.get_u16() as usize;
         if buf.len() < len {
@@ -236,10 +288,13 @@ fn parse_connect_packet(_first_byte: u8, mut buf: &[u8]) -> Result<Packet, MqttE
         if buf.len() < len {
             return Err(MqttError::incomplete(len, buf.len()));
         }
-        Some(Bytes::copy_from_slice(&buf[..len]))
+        let password = Bytes::copy_from_slice(&buf[..len]);
+        buf = &buf[len..];
+        Some(password)
     } else {
         None
     };
+    ensure_no_remaining(buf, "CONNECT", 1)?;
 
     Ok(Packet::Connect(ConnectPacket {
         protocol_name,
@@ -275,10 +330,10 @@ fn parse_connack_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
         ));
     }
     let session_present = (flags & 0x01) != 0;
-    let reason_code = ReasonCode::try_from(buf.get_u8()).map_err(|code| {
-        MqttError::invalid_reason_code(code, "CONNACK")
-    })?;
-    let properties = parse_properties(&mut buf)?;
+    let reason_code = ReasonCode::try_from(buf.get_u8())
+        .map_err(|code| MqttError::invalid_reason_code(code, "CONNACK"))?;
+    let properties = parse_required_properties(&mut buf)?;
+    ensure_no_remaining(buf, "CONNACK", 2)?;
 
     Ok(Packet::ConnAck(ConnAckPacket {
         session_present,
@@ -306,7 +361,7 @@ fn parse_publish_packet(first_byte: u8, mut buf: &[u8]) -> Result<Packet, MqttEr
         None
     };
 
-    let properties = parse_properties(&mut buf)?;
+    let properties = parse_required_properties(&mut buf)?;
     let payload = Bytes::copy_from_slice(buf);
 
     Ok(Packet::Publish(PublishPacket {
@@ -328,13 +383,16 @@ fn parse_puback_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 
     let packet_id = buf.get_u16();
     let reason_code = if !buf.is_empty() {
-        ReasonCode::try_from(buf.get_u8()).map_err(|code| {
-            MqttError::invalid_reason_code(code, "PUBACK")
-        })?
+        ReasonCode::try_from(buf.get_u8())
+            .map_err(|code| MqttError::invalid_reason_code(code, "PUBACK"))?
     } else {
         ReasonCode::Success
     };
-    let properties = parse_properties(&mut buf)?;
+    let properties = if buf.is_empty() {
+        Properties::new()
+    } else {
+        parse_reason_tail_properties(reason_code, &mut buf, "PUBACK")?
+    };
 
     Ok(Packet::PubAck(PubAckPacket {
         packet_id,
@@ -351,13 +409,16 @@ fn parse_pubrec_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 
     let packet_id = buf.get_u16();
     let reason_code = if !buf.is_empty() {
-        ReasonCode::try_from(buf.get_u8()).map_err(|code| {
-            MqttError::invalid_reason_code(code, "PUBREC")
-        })?
+        ReasonCode::try_from(buf.get_u8())
+            .map_err(|code| MqttError::invalid_reason_code(code, "PUBREC"))?
     } else {
         ReasonCode::Success
     };
-    let properties = parse_properties(&mut buf)?;
+    let properties = if buf.is_empty() {
+        Properties::new()
+    } else {
+        parse_reason_tail_properties(reason_code, &mut buf, "PUBREC")?
+    };
 
     Ok(Packet::PubRec(PubRecPacket {
         packet_id,
@@ -374,13 +435,16 @@ fn parse_pubrel_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 
     let packet_id = buf.get_u16();
     let reason_code = if !buf.is_empty() {
-        ReasonCode::try_from(buf.get_u8()).map_err(|code| {
-            MqttError::invalid_reason_code(code, "PUBREL")
-        })?
+        ReasonCode::try_from(buf.get_u8())
+            .map_err(|code| MqttError::invalid_reason_code(code, "PUBREL"))?
     } else {
         ReasonCode::Success
     };
-    let properties = parse_properties(&mut buf)?;
+    let properties = if buf.is_empty() {
+        Properties::new()
+    } else {
+        parse_reason_tail_properties(reason_code, &mut buf, "PUBREL")?
+    };
 
     Ok(Packet::PubRel(PubRelPacket {
         packet_id,
@@ -397,13 +461,16 @@ fn parse_pubcomp_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 
     let packet_id = buf.get_u16();
     let reason_code = if !buf.is_empty() {
-        ReasonCode::try_from(buf.get_u8()).map_err(|code| {
-            MqttError::invalid_reason_code(code, "PUBCOMP")
-        })?
+        ReasonCode::try_from(buf.get_u8())
+            .map_err(|code| MqttError::invalid_reason_code(code, "PUBCOMP"))?
     } else {
         ReasonCode::Success
     };
-    let properties = parse_properties(&mut buf)?;
+    let properties = if buf.is_empty() {
+        Properties::new()
+    } else {
+        parse_reason_tail_properties(reason_code, &mut buf, "PUBCOMP")?
+    };
 
     Ok(Packet::PubComp(PubCompPacket {
         packet_id,
@@ -419,7 +486,7 @@ fn parse_subscribe_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
     }
 
     let packet_id = buf.get_u16();
-    let properties = parse_properties(&mut buf)?;
+    let properties = parse_required_properties(&mut buf)?;
 
     let mut topics = Vec::new();
     while !buf.is_empty() {
@@ -464,13 +531,14 @@ fn parse_suback_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
     }
 
     let packet_id = buf.get_u16();
-    let properties = parse_properties(&mut buf)?;
+    let properties = parse_required_properties(&mut buf)?;
 
     let mut reason_codes = Vec::new();
     while !buf.is_empty() {
-        reason_codes.push(ReasonCode::try_from(buf.get_u8()).map_err(|code| {
-            MqttError::invalid_reason_code(code, "SUBACK")
-        })?);
+        reason_codes.push(
+            ReasonCode::try_from(buf.get_u8())
+                .map_err(|code| MqttError::invalid_reason_code(code, "SUBACK"))?,
+        );
     }
 
     Ok(Packet::SubAck(SubAckPacket {
@@ -487,7 +555,7 @@ fn parse_unsubscribe_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
     }
 
     let packet_id = buf.get_u16();
-    let properties = parse_properties(&mut buf)?;
+    let properties = parse_required_properties(&mut buf)?;
 
     let mut topics = Vec::new();
     while !buf.is_empty() {
@@ -508,13 +576,14 @@ fn parse_unsuback_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
     }
 
     let packet_id = buf.get_u16();
-    let properties = parse_properties(&mut buf)?;
+    let properties = parse_required_properties(&mut buf)?;
 
     let mut reason_codes = Vec::new();
     while !buf.is_empty() {
-        reason_codes.push(ReasonCode::try_from(buf.get_u8()).map_err(|code| {
-            MqttError::invalid_reason_code(code, "UNSUBACK")
-        })?);
+        reason_codes.push(
+            ReasonCode::try_from(buf.get_u8())
+                .map_err(|code| MqttError::invalid_reason_code(code, "UNSUBACK"))?,
+        );
     }
 
     Ok(Packet::UnsubAck(UnsubAckPacket {
@@ -527,13 +596,16 @@ fn parse_unsuback_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 /// Parse a DISCONNECT packet from the given buffer.
 fn parse_disconnect_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
     let reason_code = if !buf.is_empty() {
-        ReasonCode::try_from(buf.get_u8()).map_err(|code| {
-            MqttError::invalid_reason_code(code, "DISCONNECT")
-        })?
+        ReasonCode::try_from(buf.get_u8())
+            .map_err(|code| MqttError::invalid_reason_code(code, "DISCONNECT"))?
     } else {
         ReasonCode::Success
     };
-    let properties = parse_properties(&mut buf)?;
+    let properties = if buf.is_empty() {
+        Properties::new()
+    } else {
+        parse_reason_tail_properties(reason_code, &mut buf, "DISCONNECT")?
+    };
 
     Ok(Packet::Disconnect(DisconnectPacket {
         reason_code,
@@ -544,13 +616,16 @@ fn parse_disconnect_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
 /// Parse an AUTH packet from the given buffer.
 fn parse_auth_packet(mut buf: &[u8]) -> Result<Packet, MqttError> {
     let reason_code = if !buf.is_empty() {
-        ReasonCode::try_from(buf.get_u8()).map_err(|code| {
-            MqttError::invalid_reason_code(code, "AUTH")
-        })?
+        ReasonCode::try_from(buf.get_u8())
+            .map_err(|code| MqttError::invalid_reason_code(code, "AUTH"))?
     } else {
         ReasonCode::Success
     };
-    let properties = parse_properties(&mut buf)?;
+    let properties = if buf.is_empty() {
+        Properties::new()
+    } else {
+        parse_reason_tail_properties(reason_code, &mut buf, "AUTH")?
+    };
 
     Ok(Packet::Auth(AuthPacket {
         reason_code,
