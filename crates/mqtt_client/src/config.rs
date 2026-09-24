@@ -62,12 +62,45 @@ pub struct LastWill {
     pub retain: bool,
 }
 
+/// TLS options for the broker connection.
+#[derive(Debug, Clone, Default)]
+pub struct TlsOptions {
+    /// Enable TLS (typically broker port 8883).
+    pub enabled: bool,
+    /// Skip certificate verification (tests / lab only).
+    pub insecure_skip_verify: bool,
+}
+
+/// Automatic reconnect behaviour after an unexpected disconnect.
+#[derive(Debug, Clone)]
+pub struct ReconnectOptions {
+    /// When `true`, the event loop reconnects after connection loss.
+    pub enabled: bool,
+    /// Delay before the first reconnect attempt.
+    pub initial_delay: Duration,
+    /// Upper bound for exponential backoff.
+    pub max_delay: Duration,
+    /// Maximum reconnect attempts; `None` means unlimited.
+    pub max_attempts: Option<u32>,
+}
+
+impl Default for ReconnectOptions {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            initial_delay: Duration::from_secs(1),
+            max_delay: Duration::from_secs(60),
+            max_attempts: None,
+        }
+    }
+}
+
 /// Configuration for the MQTT client.
 #[derive(Debug, Clone)]
 pub struct ClientConfig {
     /// Broker address in the form `host:port`.
     pub broker_addr: String,
-    /// Client identifier. If empty, the broker may assign one (v5) or reject (v4).
+    /// Client identifier. If empty, a process-based id is generated.
     pub client_id: String,
     /// Protocol version to use.
     pub protocol_version: ProtocolVersion,
@@ -79,10 +112,16 @@ pub struct ClientConfig {
     pub credentials: Option<Credentials>,
     /// Optional Last Will and Testament.
     pub last_will: Option<LastWill>,
-    /// Connection timeout.
+    /// Connection timeout (TCP + TLS handshake + first CONNACK wait uses this for TCP).
     pub connect_timeout: Duration,
-    /// Maximum number of in-flight QoS 1/2 messages.
+    /// Maximum number of in-flight QoS 1/2 publishes.
     pub max_inflight: u16,
+    /// Retransmit unacked QoS 1/2 packets after this duration.
+    pub ack_timeout: Duration,
+    /// TLS settings.
+    pub tls: TlsOptions,
+    /// Reconnect settings.
+    pub reconnect: ReconnectOptions,
 }
 
 impl Default for ClientConfig {
@@ -96,7 +135,10 @@ impl Default for ClientConfig {
             credentials: None,
             last_will: None,
             connect_timeout: Duration::from_secs(5),
-            max_inflight: 65535,
+            max_inflight: 16,
+            ack_timeout: Duration::from_secs(30),
+            tls: TlsOptions::default(),
+            reconnect: ReconnectOptions::default(),
         }
     }
 }
@@ -123,7 +165,7 @@ impl ClientConfig {
         self
     }
 
-    /// Set clean session flag.
+    /// Set clean session / clean start flag.
     pub fn clean_session(mut self, clean: bool) -> Self {
         self.clean_session = clean;
         self
@@ -147,6 +189,30 @@ impl ClientConfig {
     /// Set the connection timeout.
     pub fn connect_timeout(mut self, timeout: Duration) -> Self {
         self.connect_timeout = timeout;
+        self
+    }
+
+    /// Set the maximum in-flight QoS 1/2 publishes.
+    pub fn max_inflight(mut self, max: u16) -> Self {
+        self.max_inflight = max.max(1);
+        self
+    }
+
+    /// Set the QoS acknowledgement retransmit timeout.
+    pub fn ack_timeout(mut self, timeout: Duration) -> Self {
+        self.ack_timeout = timeout;
+        self
+    }
+
+    /// Enable or configure TLS.
+    pub fn tls(mut self, tls: TlsOptions) -> Self {
+        self.tls = tls;
+        self
+    }
+
+    /// Configure automatic reconnect.
+    pub fn reconnect(mut self, reconnect: ReconnectOptions) -> Self {
+        self.reconnect = reconnect;
         self
     }
 }

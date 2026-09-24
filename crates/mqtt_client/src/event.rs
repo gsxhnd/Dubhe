@@ -6,7 +6,18 @@ use bytes::Bytes;
 #[derive(Debug, Clone)]
 pub enum Event {
     /// Successfully connected to the broker.
-    Connected,
+    Connected {
+        /// Whether the broker restored a previous session.
+        session_present: bool,
+    },
+
+    /// Attempting to reconnect after an unexpected disconnect.
+    Reconnecting {
+        /// 1-based reconnect attempt number.
+        attempt: u32,
+        /// Delay before this attempt.
+        delay_ms: u64,
+    },
 
     /// Received a PUBLISH message from the broker.
     Message {
@@ -31,6 +42,6 @@ pub enum Event {
     /// Unsubscription confirmed by the broker.
     UnsubAck { packet_id: u16 },
 
-    /// The connection was lost.
+    /// The connection was lost (or a graceful disconnect completed).
     Disconnected { reason: Option<String> },
 }

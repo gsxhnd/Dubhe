@@ -5,7 +5,9 @@ use std::time::Duration;
 use anyhow::{Context, Result};
 use bytes::Bytes;
 use clap::{Parser, Subcommand};
-use mqtt_client::{ClientConfig, Event, MqttClient};
+use mqtt_client::{
+    ClientConfig, Event, MqttClient, ReconnectOptions, TlsOptions,
+};
 use tokio::sync::mpsc;
 
 #[derive(Parser)]
@@ -52,6 +54,18 @@ struct Cli {
     /// Connection timeout in seconds.
     #[arg(long, global = true, default_value_t = 5)]
     timeout: u64,
+
+    /// Enable TLS.
+    #[arg(long, global = true, default_value_t = false)]
+    tls: bool,
+
+    /// Skip TLS certificate verification (lab only).
+    #[arg(long, global = true, default_value_t = false)]
+    tls_insecure: bool,
+
+    /// Disable automatic reconnect.
+    #[arg(long, global = true, default_value_t = false)]
+    no_reconnect: bool,
 
     #[command(subcommand)]
     command: Commands,
@@ -113,7 +127,20 @@ fn build_config(cli: &Cli) -> ClientConfig {
     .keep_alive(cli.keep_alive)
     .clean_session(cli.clean)
     .connect_timeout(Duration::from_secs(cli.timeout))
-    .protocol_version(cli.protocol);
+    .protocol_version(cli.protocol)
+    .tls(TlsOptions {
+        enabled: cli.tls,
+        insecure_skip_verify: cli.tls_insecure,
+    })
+    .reconnect(ReconnectOptions {
+        enabled: !cli.no_reconnect,
+        ..ReconnectOptions::default()
+    });
+
+    // One-shot pub should not spin reconnect forever on failure.
+    if matches!(cli.command, Commands::Pub { .. }) {
+        config.reconnect.enabled = false;
+    }
 
     if let Some(username) = &cli.username {
         let password = cli.password.clone().map(Bytes::from);
@@ -174,8 +201,14 @@ async fn run_subscribe(config: ClientConfig, topic: &str, qos: u8) -> Result<()>
                         let body = String::from_utf8_lossy(&payload);
                         println!("{topic} {body}");
                     }
+                    Some(Event::Reconnecting { attempt, delay_ms }) => {
+                        eprintln!("reconnecting (attempt {attempt}, delay {delay_ms}ms)...");
+                    }
+                    Some(Event::Connected { session_present }) => {
+                        eprintln!("reconnected (session_present={session_present})");
+                    }
                     Some(Event::Disconnected { reason }) => {
-                        anyhow::bail!(
+                        eprintln!(
                             "disconnected: {}",
                             reason.unwrap_or_else(|| "unknown".into())
                         );
@@ -197,10 +230,14 @@ async fn run_subscribe(config: ClientConfig, topic: &str, qos: u8) -> Result<()>
 async fn wait_connected(events: &mut mpsc::Receiver<Event>) -> Result<()> {
     loop {
         match events.recv().await {
-            Some(Event::Connected) => return Ok(()),
+            Some(Event::Connected { .. }) => return Ok(()),
+            Some(Event::Reconnecting { attempt, delay_ms }) => {
+                eprintln!("connecting (attempt {attempt}, delay {delay_ms}ms)...");
+            }
             Some(Event::Disconnected { reason }) => {
-                anyhow::bail!(
-                    "connection failed: {}",
+                // With reconnect disabled, treat as failure; with reconnect, keep waiting.
+                eprintln!(
+                    "connection attempt failed: {}",
                     reason.unwrap_or_else(|| "unknown".into())
                 );
             }

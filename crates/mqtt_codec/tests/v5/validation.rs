@@ -1,8 +1,9 @@
 use mqtt_codec::v5::{
-    parse_shared_subscription, validate_credentials_flags, validate_fixed_header_flags,
-    validate_property_scope, validate_protocol_level, validate_protocol_name,
-    validate_publish_packet, validate_qos_packet_id, validate_reason_code_for_packet,
-    validate_topic_filter, ConnectPacket, PacketType, Properties, PublishPacket, QoS, ReasonCode,
+    parse_shared_subscription, validate_auth_packet, validate_credentials_flags,
+    validate_fixed_header_flags, validate_property_scope, validate_property_values,
+    validate_protocol_level, validate_protocol_name, validate_publish_packet,
+    validate_qos_packet_id, validate_reason_code_for_packet, validate_topic_filter, AuthPacket,
+    ConnectPacket, PacketType, Properties, PublishPacket, QoS, ReasonCode,
 };
 
 #[test]
@@ -215,4 +216,31 @@ fn test_validate_shared_subscription_topic_filter() {
     assert!(validate_topic_filter("$share/gro#up/sensor/data").is_err());
     // Invalid: share name contains /
     assert!(validate_topic_filter("$share/gro/up/sensor/data").is_ok()); // This is actually "gro" as share name, "up/sensor/data" as filter
+}
+
+#[test]
+fn validate_property_values_should_reject_subscription_identifier_zero() {
+    let props = Properties {
+        subscription_identifiers: vec![0],
+        ..Default::default()
+    };
+    assert!(validate_property_values(&props).is_err());
+}
+
+#[test]
+fn validate_auth_packet_should_require_authentication_method() {
+    let packet = AuthPacket {
+        reason_code: ReasonCode::Success,
+        properties: Properties::default(),
+    };
+    assert!(validate_auth_packet(&packet).is_err());
+
+    let packet = AuthPacket {
+        reason_code: ReasonCode::Success,
+        properties: Properties {
+            authentication_method: Some("SCRAM-SHA-256".into()),
+            ..Default::default()
+        },
+    };
+    assert!(validate_auth_packet(&packet).is_ok());
 }

@@ -9,6 +9,10 @@ pub enum ClientError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// TLS handshake or configuration error.
+    #[error("TLS error: {0}")]
+    Tls(String),
+
     /// Codec encode/decode error.
     #[error("codec error: {0}")]
     Codec(#[from] mqtt_codec::MqttError),
@@ -28,10 +32,6 @@ pub enum ClientError {
     /// The internal channel was closed unexpectedly.
     #[error("internal channel closed")]
     ChannelClosed,
-
-    /// Protocol version is not implemented.
-    #[error("unsupported protocol version")]
-    UnsupportedProtocol,
 
     /// An unexpected control packet was received.
     #[error("unexpected packet: {0}")]

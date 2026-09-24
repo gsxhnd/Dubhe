@@ -1014,6 +1014,15 @@ pub fn validate_property_values(props: &Properties) -> Result<(), MqttError> {
             None,
         ));
     }
+    if props.subscription_identifiers.contains(&0) {
+        return Err(MqttError::protocol_violation(
+            "Subscription Identifier must not be 0",
+            None,
+        ));
+    }
+    if let Some(ref topic) = props.response_topic {
+        v4::validate_topic_name(topic)?;
+    }
     Ok(())
 }
 
@@ -1080,6 +1089,13 @@ pub fn validate_auth_packet(packet: &AuthPacket) -> Result<(), MqttError> {
     validate_reason_code_for_packet(packet.reason_code, PacketType::Auth)?;
     validate_property_values(&packet.properties)?;
     validate_property_scope(&packet.properties, PacketType::Auth)?;
+    // MQTT-5.0 [MQTT-4.12.0-5]: Authentication Method is required on AUTH packets.
+    if packet.properties.authentication_method.is_none() {
+        return Err(MqttError::protocol_violation(
+            "AUTH packet must include Authentication Method",
+            Some(15),
+        ));
+    }
     Ok(())
 }
 
